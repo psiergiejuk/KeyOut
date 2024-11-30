@@ -2,119 +2,39 @@ import evdev
 from evdev import UInput, ecodes
 import os
 import struct
+import freetype
 
-def generate_font_table():
-    FONT_10x14 = {
-    "A": [
-        0x03C0, 0x0420, 0x0810, 0x0810, 0x0810, 0x0FF0, 0x0810, 0x0810, 0x0810, 0x0810,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "B": [
-        0x0FE0, 0x0820, 0x0810, 0x0810, 0x0820, 0x0FE0, 0x0820, 0x0810, 0x0810, 0x0820,
-        0x0FE0, 0x0000, 0x0000, 0x0000
-    ],
-    "C": [
-        0x03C0, 0x0420, 0x0810, 0x0800, 0x0800, 0x0800, 0x0800, 0x0800, 0x0810, 0x0420,
-        0x03C0, 0x0000, 0x0000, 0x0000
-    ],
-    "D": [
-        0x0FC0, 0x0820, 0x0810, 0x0810, 0x0810, 0x0810, 0x0810, 0x0810, 0x0820, 0x0FC0,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "E": [
-        0x0FF0, 0x0800, 0x0800, 0x0800, 0x0FF0, 0x0800, 0x0800, 0x0800, 0x0800, 0x0FF0,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "F": [
-        0x0FF0, 0x0800, 0x0800, 0x0800, 0x0FF0, 0x0800, 0x0800, 0x0800, 0x0800, 0x0800,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "0": [
-        0x03C0, 0x0420, 0x0810, 0x0990, 0x0A50, 0x0C30, 0x0810, 0x0810, 0x0420, 0x03C0,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "1": [
-        0x0180, 0x0380, 0x0580, 0x0980, 0x0180, 0x0180, 0x0180, 0x0180, 0x0180, 0x0FF0,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "!": [
-        0x0180, 0x0180, 0x0180, 0x0180, 0x0180, 0x0000, 0x0180, 0x0180, 0x0000, 0x0000,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    ".": [
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0180, 0x0180, 0x0180,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "?": [
-        0x03C0, 0x0600, 0x0810, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200, 0x0200, 0x0000,
-        0x0200, 0x0000, 0x0000, 0x0000
-    ],
-    ":": [
-        0x0000, 0x0000, 0x0000, 0x0180, 0x0180, 0x0000, 0x0000, 0x0180, 0x0180, 0x0000,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    ";": [
-        0x0000, 0x0000, 0x0000, 0x0180, 0x0180, 0x0000, 0x0000, 0x0180, 0x00C0, 0x0060,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "'": [
-        0x0180, 0x0180, 0x0180, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "-": [
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0FF0, 0x0000, 0x0000, 0x0000, 0x0000,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "_": [
-        0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0FFF,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ],
-    "/": [
-        0x0003, 0x0006, 0x000C, 0x0018, 0x0030, 0x0060, 0x00C0, 0x0180, 0x0300, 0x0600,
-        0x0000, 0x0000, 0x0000, 0x0000
-    ]
-    # Kontynuuj dla wszystkich liter, cyfr i znaków
-    }
-    font_5x7 = {
-        "A": [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
-        "B": [0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110],
-        "C": [0b01110, 0b10001, 0b10000, 0b10000, 0b10000, 0b10001, 0b01110],
-        "D": [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
-        "E": [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111],
-        "F": [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000],
-        "G": [0b01110, 0b10001, 0b10000, 0b10011, 0b10001, 0b10001, 0b01110],
-        "H": [0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
-        "I": [0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
-        "J": [0b00001, 0b00001, 0b00001, 0b00001, 0b10001, 0b10001, 0b01110],
-        "K": [0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001],
-        "L": [0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111],
-        "M": [0b10001, 0b11011, 0b10101, 0b10101, 0b10001, 0b10001, 0b10001],
-        "N": [0b10001, 0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001],
-        "O": [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
-        "P": [0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000],
-        "Q": [0b01110, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01101],
-        "R": [0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001],
-        "S": [0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110],
-        "T": [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
-        "U": [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
-        "V": [0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100],
-        "W": [0b10001, 0b10001, 0b10001, 0b10101, 0b10101, 0b10101, 0b01010],
-        "X": [0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001],
-        "Y": [0b10001, 0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100],
-        "Z": [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111],
-        "0": [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
-        "1": [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
-        "2": [0b01110, 0b10001, 0b00001, 0b00110, 0b01000, 0b10000, 0b11111],
-        "3": [0b01110, 0b10001, 0b00001, 0b00110, 0b00001, 0b10001, 0b01110],
-        "4": [0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010],
-        "5": [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110],
-        "6": [0b01110, 0b10000, 0b10000, 0b11110, 0b10001, 0b10001, 0b01110],
-        "7": [0b11111, 0b00001, 0b00001, 0b00010, 0b00100, 0b01000, 0b01000],
-        "8": [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110],
-        "9": [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00001, 0b01110],
-    }
-    return font_5x7
+def render_char_with_freetype(char, font_path="/usr/share/fonts/TTF/DejaVuSans-Bold.ttf", font_size=48):
+    """
+    Renderuje pojedynczy znak z użyciem FreeType i zwraca bitmapę.
 
+    :param char: Znak do wyświetlenia.
+    :param font_path: Ścieżka do pliku czcionki.
+    :param font_size: Rozmiar czcionki (w punktach).
+    :return: Bitmapa (lista wierszy, gdzie 1 = piksel aktywny, 0 = piksel nieaktywny).
+    """
+    # Załaduj czcionkę
+    face = freetype.Face(font_path)
+    face.set_char_size(font_size * 64)
+
+    # Załaduj znak
+    face.load_char(char)
+    bitmap = face.glyph.bitmap
+
+    # Pobierz wymiary bitmapy
+    width, rows = bitmap.width, bitmap.rows
+    buffer = bitmap.buffer
+
+    # Konwertuj dane bitmapy na tablicę 2D (1 = aktywny piksel, 0 = nieaktywny)
+    rendered_char = []
+    for row in range(rows):
+        row_data = []
+        for col in range(width):
+            pixel = buffer[row * width + col]
+            row_data.append(1 if pixel > 0 else 0)
+        rendered_char.append(row_data)
+
+    return rendered_char
 
 def draw_rectangle_with_text(device="/dev/fb0", width=800, height=600, rect_x=200, rect_y=150, rect_w=400, rect_h=300, color=(255, 255, 255), text="Hello", text_color=(255, 255, 255)):
     """
@@ -131,8 +51,6 @@ def draw_rectangle_with_text(device="/dev/fb0", width=800, height=600, rect_x=20
     :param text: Tekst do wyświetlenia w środku.
     :param text_color: Kolor tekstu jako tuple (R, G, B).
     """
-    # Generowanie tablicy fontów
-    font_table = generate_font_table()
     try:
         with open(device, "r+b") as fb:
             bytes_per_pixel = 4
@@ -155,18 +73,18 @@ def draw_rectangle_with_text(device="/dev/fb0", width=800, height=600, rect_x=20
                 set_pixel(rect_x + rect_w - 1, y, color)
 
             # Rysowanie tekstu w środku
-            char_width = 6  # Szerokość znaku (5 pikseli + 1 przerwy)
-            char_height = 7  # Wysokość znaku
+            char_width = 11  # Szerokość znaku (5 pikseli + 1 przerwy)
+            char_height = 14  # Wysokość znaku
             text_start_x = rect_x + (rect_w - len(text) * char_width) // 2
             text_start_y = rect_y + (rect_h - char_height) // 2
-            for i, char in enumerate(text):
-                if char in font_table:
-                    char_bitmap = font_table[char]
-                    char_x = text_start_x + i * char_width
-                    for row, row_data in enumerate(char_bitmap):
-                        for col in range(5):  # Każda litera ma 5 kolumn
-                            if row_data & (1 << (4 - col)):
-                                set_pixel(char_x + col, text_start_y + row, text_color)
+
+            for char in text:
+                bitmap = render_char_with_freetype(char, font_size=20)
+                for row_idx, row in enumerate(bitmap):
+                    for col_idx, pixel in enumerate(row):
+                        if pixel:  # Jeśli piksel aktywny
+                            set_pixel(text_start_x + col_idx, text_start_y + row_idx, (255, 255, 255))
+                text_start_x += len(bitmap[0]) + 2  # Przesunięcie dla kolejnego znaku
 
             print(f"Narysowano pusty kwadrat z napisem '{text}' w środku.")
     except PermissionError:
