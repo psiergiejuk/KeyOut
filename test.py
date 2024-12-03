@@ -3,74 +3,84 @@ from evdev import UInput, ecodes
 import os
 import struct
 import freetype
+import mmap
 
-def render_char_with_freetype(char, font_path="/usr/share/fonts/TTF/DejaVuSans-Bold.ttf", font_size=48):
-    """
-    Renderuje pojedynczy znak z użyciem FreeType i zwraca bitmapę.
 
-    :param char: Znak do wyświetlenia.
-    :param font_path: Ścieżka do pliku czcionki.
-    :param font_size: Rozmiar czcionki (w punktach).
-    :return: Bitmapa (lista wierszy, gdzie 1 = piksel aktywny, 0 = piksel nieaktywny).
-    """
-    # Załaduj czcionkę
-    face = freetype.Face(font_path)
-    face.set_char_size(font_size * 64)
+class FBW:
+    
+    BYTE_PER_PIXEL = 4
+    MAIN_COLOR = (100, 120, 100)
+    SEC_COLOR = (255, 255, 0)
+    FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 
-    # Załaduj znak
-    face.load_char(char)
-    bitmap = face.glyph.bitmap
+    def __init__(self, device="/dev/fb0", start_x=800, start_y=0, width=1920, height=1080, font_path=None):
+        if font_path is None:
+            font_path = self.FONT
+        self.fb = open(device, "r+b")
+        self.stride = self.width * self.BYTE_PER_PIXEL
+        self.fb_map = mmap.mmap(fb.fileno(), self.stride * self.height, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
+        self.face = freetype.Face(font_path)
 
-    # Pobierz wymiary bitmapy
-    width, rows = bitmap.width, bitmap.rows
-    buffer = bitmap.buffer
+    def set_pixel(self, x, y, color=self.MAIN_COLOR):
+        if 0 <= x < self.width and 0 <= y < self.height:
+            offset = (y * self.stride) + (x * self.BYTE_PER_PIXEL)
+            self.fb_map[offset:offset + 4] = struct.pack("B" * 4, color[2], color[1], color[0], 0)
 
-    # Konwertuj dane bitmapy na tablicę 2D (1 = aktywny piksel, 0 = nieaktywny)
-    rendered_char = []
-    for row in range(rows):
-        row_data = []
-        for col in range(width):
-            pixel = buffer[row * width + col]
-            row_data.append(1 if pixel > 0 else 0)
-        rendered_char.append(row_data)
+    def render_char_with_freetype(self, char, font_path=None, font_size=48):
+        """
+        Renderuje pojedynczy znak z użyciem FreeType i zwraca bitmapę.
 
-    return rendered_char
+        :param char: Znak do wyświetlenia. 
+        :param font_path: Ścieżka do pliku czcionki.
+        :param font_size: Rozmiar czcionki (w punktach).
+        :return: Bitmapa (lista wierszy, gdzie 1 = piksel aktywny, 0 = piksel nieaktywny).
+        """
+        self.face.set_char_size(font_size * 64)
 
-def draw_rectangle_with_text(device="/dev/fb0", width=800, height=600, rect_x=200, rect_y=150, rect_w=400, rect_h=300, color=(255, 255, 255), text="Hello", text_color=(255, 255, 255)):
-    """
-    Rysuje pusty w środku kwadrat z napisem w środku.
+        # Załaduj znak
+        self.face.load_char(char)
+        bitmap = self.face.glyph.bitmap
 
-    :param device: Ścieżka do urządzenia framebuffer.
-    :param width: Szerokość ekranu w pikselach.
-    :param height: Wysokość ekranu w pikselach.
-    :param rect_x: Lewy górny róg prostokąta (X).
-    :param rect_y: Lewy górny róg prostokąta (Y).
-    :param rect_w: Szerokość prostokąta.
-    :param rect_h: Wysokość prostokąta.
-    :param color: Kolor obramowania jako tuple (R, G, B).
-    :param text: Tekst do wyświetlenia w środku.
-    :param text_color: Kolor tekstu jako tuple (R, G, B).
-    """
-    try:
-        with open(device, "r+b") as fb:
-            bytes_per_pixel = 4
-            stride = width * bytes_per_pixel
+        # Pobierz wymiary bitmapy
+        width, rows = bitmap.width, bitmap.rows
+        buffer = bitmap.buffer
 
-            def set_pixel(x, y, color):
-                if 0 <= x < width and 0 <= y < height:
-                    offset = (y * stride) + (x * bytes_per_pixel)
-                    fb.seek(offset)
-                    fb.write(struct.pack("B" * 4, color[2], color[1], color[0], 0))
+        # Konwertuj dane bitmapy na tablicę 2D (1 = aktywny piksel, 0 = nieaktywny)
+        rendered_char = []
+        for row in range(rows):
+            row_data = []
+            for col in range(width):
+                pixel = buffer[row * width + col]
+                row_data.append(1 if pixel > 0 else 0)
+            rendered_char.append(row_data)
 
+        return rendered_char
+
+    def draw_rectangle_with_text(self, width=800, height=600, rect_x=200, rect_y=150, rect_w=400, rect_h=300):
+        """
+        Rysuje pusty w środku kwadrat z napisem w środku.
+
+        :param device: Ścieżka do urządzenia framebuffer.
+        :param width: Szerokość ekranu w pikselach.
+        :param height: Wysokość ekranu w pikselach.
+        :param rect_x: Lewy górny róg prostokąta (X).
+        :param rect_y: Lewy górny róg prostokąta (Y).
+        :param rect_w: Szerokość prostokąta.
+        :param rect_h: Wysokość prostokąta.
+        :param color: Kolor obramowania jako tuple (R, G, B).
+        :param text: Tekst do wyświetlenia w środku.
+        :param text_color: Kolor tekstu jako tuple (R, G, B).
+        """
+        try:
             # Rysowanie górnej i dolnej krawędzi
             for x in range(rect_x, rect_x + rect_w):
-                set_pixel(x, rect_y, color)
-                set_pixel(x, rect_y + rect_h - 1, color)
+                self.set_pixel(x, rect_y, color)
+                self.set_pixel(x, rect_y + rect_h - 1, color)
 
             # Rysowanie lewej i prawej krawędzi
             for y in range(rect_y, rect_y + rect_h):
-                set_pixel(rect_x, y, color)
-                set_pixel(rect_x + rect_w - 1, y, color)
+                self.set_pixel(rect_x, y, color)
+                self.set_pixel(rect_x + rect_w - 1, y, color)
 
             # Rysowanie tekstu w środku
             char_width = 11  # Szerokość znaku (5 pikseli + 1 przerwy)
@@ -79,33 +89,25 @@ def draw_rectangle_with_text(device="/dev/fb0", width=800, height=600, rect_x=20
             text_start_y = rect_y + (rect_h - char_height) // 2
 
             for char in text:
-                bitmap = render_char_with_freetype(char, font_size=20)
+                bitmap = self.render_char_with_freetype(char, font_size=20)
                 for row_idx, row in enumerate(bitmap):
                     for col_idx, pixel in enumerate(row):
                         if pixel:  # Jeśli piksel aktywny
-                            set_pixel(text_start_x + col_idx, text_start_y + row_idx, (255, 255, 255))
+                            self.set_pixel(text_start_x + col_idx, text_start_y + row_idx, (255, 255, 255))
                 text_start_x += len(bitmap[0]) + 2  # Przesunięcie dla kolejnego znaku
 
-            print(f"Narysowano pusty kwadrat z napisem '{text}' w środku.")
-    except PermissionError:
-        print("Nie masz uprawnień do zapisu w /dev/fb0. Uruchom jako root.")
-    except FileNotFoundError:
-        print(f"Urządzenie {device} nie istnieje.")
-    except Exception as e:
-        print(f"Wystąpił błąd: {e}")
+                print(f"Narysowano pusty kwadrat z napisem '{text}' w środku.")
+        except PermissionError:
+            print("Nie masz uprawnień do zapisu w /dev/fb0. Uruchom jako root.")
+        except FileNotFoundError:
+            print(f"Urządzenie {device} nie istnieje.")
+        except Exception as e:
+            print(f"Wystąpił błąd: {e}")
 
 
 
-def find_touch_device(device_name):
-    """Znajduje urządzenie dotykowe po nazwie."""
-    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-    for device in devices:
-        if device_name.lower() in device.name.lower():
-            return device
-    raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
 
-
-def generate_keyboard_layout(max_x, max_y):
+def generate_keyboard_layout(max_x, max_y, stride):
     """Generuje układ klawiatury w stylu ThinkPad."""
     # Parametry ekranu i prostokąta
     screen_width = 1920  # szerokość ekranu w pikselach
@@ -145,10 +147,19 @@ def generate_keyboard_layout(max_x, max_y):
                 rect_h=int(0.22 * (y_end - y_start)),
                 color=rect_color,
                 text=key,
-                text_color=text_color
+                text_color=text_color,
+                stride=stride
             )
 
     return layout
+
+def find_touch_device(device_name):
+    """Znajduje urządzenie dotykowe po nazwie."""
+    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+    for device in devices:
+        if device_name.lower() in device.name.lower():
+            return device
+    raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
 
 
 def map_touch_to_key(x, y, layout):
@@ -206,8 +217,9 @@ def main():
                 max_x = abs_data.max
             elif code == ecodes.ABS_Y:
                 max_y = abs_data.max
-
-        layout = generate_keyboard_layout(max_x, max_y)
+        bytes_per_pixel = 4
+        stride = max_x * bytes_per_pixel
+        layout = generate_keyboard_layout(max_x, max_y, stride)
 
         ui = UInput(
             {
@@ -234,6 +246,7 @@ def main():
 
         print(f"Virtual Keyboard created: {ui.name}")
         print(f"Device node: {ui.device}")
+        print(touch_device)
 
         x, y = None, None
         pressed_key = None  # Śledzi aktualnie naciśnięty klawisz
@@ -248,10 +261,11 @@ def main():
 
                 # Jeśli współrzędne są dostępne, przetwarzamy Touch Down
                 if awaiting_coordinates and x is not None and y is not None:
+
                     print(f"Processing Touch Down: X={x}, Y={y}")
                     key = map_touch_to_key(x, y, layout)
                     if key == "Fn":
-                        layout = generate_keyboard_layout(max_x, max_y)                        
+                        layout = generate_keyboard_layout(max_x, max_y, stride)                        
                     if key and pressed_key is None:
                         send_key_to_system(ui, key, is_pressed=True)
                         pressed_key = key
@@ -271,6 +285,7 @@ def main():
 
     except Exception as e:
         print(f"Błąd: {e}")
+
 
 
 if __name__ == "__main__":
