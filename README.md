@@ -1,5 +1,5 @@
 
-![Zrzut ekranu z 2024-11-30 11-20-27](https://github.com/user-attachments/assets/20c2636f-878e-48a3-87f6-7befdf29864e)
+![Zrzut ekranu z 2024-12-03 21-54-09](https://github.com/user-attachments/assets/073cb488-ca4e-49fd-bca5-5095161d8875)
 
 # KeyOut
 Minimal Linux Keypad A lightweight virtual keypad designed for Linux tablets with touchscreens. No X environment required—pure console magic, baby! 🖥️✨
