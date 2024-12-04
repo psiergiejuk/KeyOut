@@ -6,7 +6,7 @@ import freetype
 import mmap
 
 
-class FBW:
+class FB_Manger:
     
     BYTE_PER_PIXEL = 4
     MAIN_COLOR = (100, 120, 100)
@@ -21,7 +21,9 @@ class FBW:
         self.fb_map = mmap.mmap(fb.fileno(), self.stride * self.height, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
         self.face = freetype.Face(font_path)
 
-    def set_pixel(self, x, y, color=self.MAIN_COLOR):
+    def set_pixel(self, x, y, color=None):
+        if color is None:
+            color = self.MAIN_COLOR
         if 0 <= x < self.width and 0 <= y < self.height:
             offset = (y * self.stride) + (x * self.BYTE_PER_PIXEL)
             self.fb_map[offset:offset + 4] = struct.pack("B" * 4, color[2], color[1], color[0], 0)
@@ -106,7 +108,6 @@ class FBW:
 
 
 
-
 def generate_keyboard_layout(max_x, max_y, stride):
     """Generuje układ klawiatury w stylu ThinkPad."""
     # Parametry ekranu i prostokąta
@@ -153,15 +154,6 @@ def generate_keyboard_layout(max_x, max_y, stride):
 
     return layout
 
-def find_touch_device(device_name):
-    """Znajduje urządzenie dotykowe po nazwie."""
-    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-    for device in devices:
-        if device_name.lower() in device.name.lower():
-            return device
-    raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
-
-
 def map_touch_to_key(x, y, layout):
     """Mapuje współrzędne dotyku na klawisz."""
     for x_start, y_start, x_end, y_end, key in layout:
@@ -204,22 +196,82 @@ def send_key_to_system(ui, key, is_pressed=True):
         print(f"Unrecognized key: {key}")
 
 
+class Event:
+    
+    def __init__(self, x, y, slot=0):
+        self.x = x
+        self.y = y
+        self.slot = slot
+
+
+    def __repr__(self):
+        return f"<Event x:{self.x} y:{self.y} slot:{self.slot}>"
+
+class Touch:
+
+    def __init__(self, name="Finger"):
+        self.touch_device = self.find_touch_device(name)
+        abs_info = self.touch_device.capabilities().get(ecodes.EV_ABS, [])
+        self.max_x = None
+        self.max_y = None
+        for code, abs_data in abs_info:
+            if code == ecodes.ABS_X:
+                self.max_x = abs_data.max
+            elif code == ecodes.ABS_Y:
+                self.max_y = abs_data.max
+
+    def find_touch_device(self.device_name):
+        """Znajduje urządzenie dotykowe po nazwie."""
+        devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+        for device in devices:
+            if device_name.lower() in device.name.lower():
+                return device
+        raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
+
+    def read(self):
+        for event in self.touch.read_loop():
+            if event.type == ecodes.EV_ABS:
+                if event.code == ecodes.ABS_X:
+                    x = event.value
+                elif event.code == ecodes.ABS_Y:
+                    y = event.value
+                elif event.code == ecodes.ABS_MT_SLOT:  # ID kontaktu
+                    touch_data["slot"] = event.value
+
+                # Jeśli współrzędne są dostępne, przetwarzamy Touch Down
+                if awaiting_coordinates and x is not None and y is not None:
+
+                    print(f"Processing Touch Down: X={x}, Y={y}")
+                    key = map_touch_to_key(x, y, layout)
+                    if key == "Fn":
+                        layout = generate_keyboard_layout(touch.max_x, touch.max_y, stride)                        
+                    if key and pressed_key is None:
+                        send_key_to_system(ui, key, is_pressed=True)
+                        pressed_key = key
+                    awaiting_coordinates = False  # Współrzędne zostały przetworzone
+
+            elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
+                if event.value == 1:  # Touch Down
+                    print(f"Touch Down initiated, waiting for coordinates.")
+                    awaiting_coordinates = True
+                elif event.value == 0:  # Touch Up
+                    print(f"Touch Up: X={x}, Y={y}")
+                    if pressed_key:
+                        send_key_to_system(ui, pressed_key, is_pressed=False)
+                        pressed_key = None  # Zresetuj naciśnięty klawisz
+                    x, y = None, None  # Reset współrzędnych
+                    awaiting_coordinates = False  # Nie oczekujemy już współrzędnych
+            yield event
+
+
+
 def main():
     """Główna funkcja programu."""
     try:
-        device_name = "Finger"
-        touch_device = find_touch_device(device_name)
-
-        abs_info = touch_device.capabilities().get(ecodes.EV_ABS, [])
-        max_x = max_y = None
-        for code, abs_data in abs_info:
-            if code == ecodes.ABS_X:
-                max_x = abs_data.max
-            elif code == ecodes.ABS_Y:
-                max_y = abs_data.max
+        touch = Touch()
         bytes_per_pixel = 4
-        stride = max_x * bytes_per_pixel
-        layout = generate_keyboard_layout(max_x, max_y, stride)
+        stride = touch.max_x * bytes_per_pixel
+        layout = generate_keyboard_layout(touch.max_x, max_y, stride)
 
         ui = UInput(
             {
@@ -246,13 +298,14 @@ def main():
 
         print(f"Virtual Keyboard created: {ui.name}")
         print(f"Device node: {ui.device}")
-        print(touch_device)
 
         x, y = None, None
         pressed_key = None  # Śledzi aktualnie naciśnięty klawisz
         awaiting_coordinates = False  # Czy czekamy na współrzędne po Touch Down
 
-        for event in touch_device.read_loop():
+        for event in touch.read():
+
+            if 
             if event.type == ecodes.EV_ABS:
                 if event.code == ecodes.ABS_X:
                     x = event.value
@@ -265,7 +318,7 @@ def main():
                     print(f"Processing Touch Down: X={x}, Y={y}")
                     key = map_touch_to_key(x, y, layout)
                     if key == "Fn":
-                        layout = generate_keyboard_layout(max_x, max_y, stride)                        
+                        layout = generate_keyboard_layout(touch.max_x, touch.max_y, stride)                        
                     if key and pressed_key is None:
                         send_key_to_system(ui, key, is_pressed=True)
                         pressed_key = key
