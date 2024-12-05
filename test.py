@@ -198,14 +198,15 @@ def send_key_to_system(ui, key, is_pressed=True):
 
 class Event:
     
-    def __init__(self, x, y, slot=0):
+    def __init__(self, x=-1, y=-1, action=None, slot=0, ):
         self.x = x
         self.y = y
         self.slot = slot
+        self.action = action
 
 
     def __repr__(self):
-        return f"<Event x:{self.x} y:{self.y} slot:{self.slot}>"
+        return f"<Event x:{self.x} y:{self.y} action:{self.action} slot:{self.slot}>"
 
 class Touch:
 
@@ -220,48 +221,33 @@ class Touch:
             elif code == ecodes.ABS_Y:
                 self.max_y = abs_data.max
 
-    def find_touch_device(self.device_name):
+    def find_touch_device(self, name):
         """Znajduje urządzenie dotykowe po nazwie."""
         devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
         for device in devices:
-            if device_name.lower() in device.name.lower():
+            if name.lower() in device.name.lower():
                 return device
         raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
 
     def read(self):
-        for event in self.touch.read_loop():
-            if event.type == ecodes.EV_ABS:
+        data = {}
+        current = Event()
+        for event in self.touch_device.read_loop():
+            if event.type == ecodes.EV_SYN:
+                yield current
+                current = Event()
+            elif event.type == ecodes.EV_ABS:
                 if event.code == ecodes.ABS_X:
-                    x = event.value
+                    current.x = event.value
                 elif event.code == ecodes.ABS_Y:
-                    y = event.value
-                elif event.code == ecodes.ABS_MT_SLOT:  # ID kontaktu
-                    touch_data["slot"] = event.value
+                    current.y = event.value
 
-                # Jeśli współrzędne są dostępne, przetwarzamy Touch Down
-                if awaiting_coordinates and x is not None and y is not None:
-
-                    print(f"Processing Touch Down: X={x}, Y={y}")
-                    key = map_touch_to_key(x, y, layout)
-                    if key == "Fn":
-                        layout = generate_keyboard_layout(touch.max_x, touch.max_y, stride)                        
-                    if key and pressed_key is None:
-                        send_key_to_system(ui, key, is_pressed=True)
-                        pressed_key = key
-                    awaiting_coordinates = False  # Współrzędne zostały przetworzone
+                elif event.code == ecodes.ABS_MT_TRACKING_ID:  # Tracking ID (rozpoczęcie/koniec dotyku)
+                #elif event.code == ecodes.ABS_MT_SLOT:  # ID kontaktu
+                    current.slot = event.value
 
             elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-                if event.value == 1:  # Touch Down
-                    print(f"Touch Down initiated, waiting for coordinates.")
-                    awaiting_coordinates = True
-                elif event.value == 0:  # Touch Up
-                    print(f"Touch Up: X={x}, Y={y}")
-                    if pressed_key:
-                        send_key_to_system(ui, pressed_key, is_pressed=False)
-                        pressed_key = None  # Zresetuj naciśnięty klawisz
-                    x, y = None, None  # Reset współrzędnych
-                    awaiting_coordinates = False  # Nie oczekujemy już współrzędnych
-            yield event
+                current.action = event.value
 
 
 
@@ -269,6 +255,7 @@ def main():
     """Główna funkcja programu."""
     try:
         touch = Touch()
+        """
         bytes_per_pixel = 4
         stride = touch.max_x * bytes_per_pixel
         layout = generate_keyboard_layout(touch.max_x, max_y, stride)
@@ -302,10 +289,10 @@ def main():
         x, y = None, None
         pressed_key = None  # Śledzi aktualnie naciśnięty klawisz
         awaiting_coordinates = False  # Czy czekamy na współrzędne po Touch Down
-
+        """
         for event in touch.read():
-
-            if 
+            print(event)
+            """ 
             if event.type == ecodes.EV_ABS:
                 if event.code == ecodes.ABS_X:
                     x = event.value
@@ -335,7 +322,7 @@ def main():
                         pressed_key = None  # Zresetuj naciśnięty klawisz
                     x, y = None, None  # Reset współrzędnych
                     awaiting_coordinates = False  # Nie oczekujemy już współrzędnych
-
+            """
     except Exception as e:
         print(f"Błąd: {e}")
 
