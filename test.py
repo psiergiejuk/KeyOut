@@ -1,9 +1,9 @@
-import evdev
-from evdev import UInput, ecodes
 import os
 import struct
 import freetype
 import mmap
+import queue
+from touch import TouchProcessor
 
 
 class FB_Manger:
@@ -16,9 +16,11 @@ class FB_Manger:
     def __init__(self, device="/dev/fb0", start_x=800, start_y=0, width=1920, height=1080, font_path=None):
         if font_path is None:
             font_path = self.FONT
+        self.height = height
+        self.width = width
         self.fb = open(device, "r+b")
         self.stride = self.width * self.BYTE_PER_PIXEL
-        self.fb_map = mmap.mmap(fb.fileno(), self.stride * self.height, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
+        self.fb_map = mmap.mmap(self.fb.fileno(), self.stride * self.height, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
         self.face = freetype.Face(font_path)
 
     def set_pixel(self, x, y, color=None):
@@ -58,7 +60,7 @@ class FB_Manger:
 
         return rendered_char
 
-    def draw_rectangle_with_text(self, width=800, height=600, rect_x=200, rect_y=150, rect_w=400, rect_h=300):
+    def draw_rectangle_with_text(self, width=800, height=610, rect_x=200, rect_y=150, rect_w=400, rect_h=300, text=""):
         """
         Rysuje pusty w środku kwadrat z napisem w środku.
 
@@ -73,16 +75,17 @@ class FB_Manger:
         :param text: Tekst do wyświetlenia w środku.
         :param text_color: Kolor tekstu jako tuple (R, G, B).
         """
+        print(rect_x, rect_y, rect_x + rect_w, rect_y + rect_h, text)
         try:
             # Rysowanie górnej i dolnej krawędzi
             for x in range(rect_x, rect_x + rect_w):
-                self.set_pixel(x, rect_y, color)
-                self.set_pixel(x, rect_y + rect_h - 1, color)
+                self.set_pixel(x, rect_y, self.MAIN_COLOR)
+                self.set_pixel(x, rect_y + rect_h - 1, self.MAIN_COLOR)
 
             # Rysowanie lewej i prawej krawędzi
             for y in range(rect_y, rect_y + rect_h):
-                self.set_pixel(rect_x, y, color)
-                self.set_pixel(rect_x + rect_w - 1, y, color)
+                self.set_pixel(rect_x, y, self.MAIN_COLOR)
+                self.set_pixel(rect_x + rect_w - 1, y, self.MAIN_COLOR)
 
             # Rysowanie tekstu w środku
             char_width = 11  # Szerokość znaku (5 pikseli + 1 przerwy)
@@ -98,7 +101,6 @@ class FB_Manger:
                             self.set_pixel(text_start_x + col_idx, text_start_y + row_idx, (255, 255, 255))
                 text_start_x += len(bitmap[0]) + 2  # Przesunięcie dla kolejnego znaku
 
-                print(f"Narysowano pusty kwadrat z napisem '{text}' w środku.")
         except PermissionError:
             print("Nie masz uprawnień do zapisu w /dev/fb0. Uruchom jako root.")
         except FileNotFoundError:
@@ -108,7 +110,7 @@ class FB_Manger:
 
 
 
-def generate_keyboard_layout(max_x, max_y, stride):
+def generate_keyboard_layout(fbm, max_x, max_y, stride):
     """Generuje układ klawiatury w stylu ThinkPad."""
     # Parametry ekranu i prostokąta
     screen_width = 1920  # szerokość ekranu w pikselach
@@ -139,17 +141,14 @@ def generate_keyboard_layout(max_x, max_y, stride):
             x_end = x_start + col_width
             layout.append((x_start, y_start, x_end, y_end, key))
             # Rysowanie prostokąta z tekstem
-            draw_rectangle_with_text(
+            fbm.draw_rectangle_with_text(
                 width=screen_width ,
                 height=screen_height,
                 rect_x=int(x_start*0.22),
                 rect_y=int(y_start*0.22),
                 rect_w=int(0.22 * (x_end - x_start)),
                 rect_h=int(0.22 * (y_end - y_start)),
-                color=rect_color,
                 text=key,
-                text_color=text_color,
-                stride=stride
             )
 
     return layout
@@ -196,65 +195,24 @@ def send_key_to_system(ui, key, is_pressed=True):
         print(f"Unrecognized key: {key}")
 
 
-class Event:
-    
-    def __init__(self, x=-1, y=-1, action=None, slot=0, ):
-        self.x = x
-        self.y = y
-        self.slot = slot
-        self.action = action
-
-
-    def __repr__(self):
-        return f"<Event x:{self.x} y:{self.y} action:{self.action} slot:{self.slot}>"
-
-class Touch:
-
-    def __init__(self, name="Finger"):
-        self.touch_device = self.find_touch_device(name)
-        abs_info = self.touch_device.capabilities().get(ecodes.EV_ABS, [])
-        self.max_x = None
-        self.max_y = None
-        for code, abs_data in abs_info:
-            if code == ecodes.ABS_X:
-                self.max_x = abs_data.max
-            elif code == ecodes.ABS_Y:
-                self.max_y = abs_data.max
-
-    def find_touch_device(self, name):
-        """Znajduje urządzenie dotykowe po nazwie."""
-        devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-        for device in devices:
-            if name.lower() in device.name.lower():
-                return device
-        raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
-
-    def read(self):
-        data = {}
-        current = Event()
-        for event in self.touch_device.read_loop():
-            if event.type == ecodes.EV_SYN:
-                yield current
-                current = Event()
-            elif event.type == ecodes.EV_ABS:
-                if event.code == ecodes.ABS_X:
-                    current.x = event.value
-                elif event.code == ecodes.ABS_Y:
-                    current.y = event.value
-
-                elif event.code == ecodes.ABS_MT_TRACKING_ID:  # Tracking ID (rozpoczęcie/koniec dotyku)
-                #elif event.code == ecodes.ABS_MT_SLOT:  # ID kontaktu
-                    current.slot = event.value
-
-            elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-                current.action = event.value
-
-
-
 def main():
     """Główna funkcja programu."""
     try:
-        touch = Touch()
+        event_queue = queue.Queue()
+        touch = TouchProcessor(event_queue)
+        touch.start()
+        fbm = FB_Manger()
+        bytes_per_pixel = 4
+        stride = touch.max_x * bytes_per_pixel
+        layout = generate_keyboard_layout(fbm, touch.max_x, touch.max_y, stride)
+
+
+        while True:
+            try:
+                event = event_queue.get(timeout=1)
+                print(event)
+            except queue.Empty:
+                pass
         """
         bytes_per_pixel = 4
         stride = touch.max_x * bytes_per_pixel
@@ -290,40 +248,7 @@ def main():
         pressed_key = None  # Śledzi aktualnie naciśnięty klawisz
         awaiting_coordinates = False  # Czy czekamy na współrzędne po Touch Down
         """
-        for event in touch.read():
-            print(event)
-            """ 
-            if event.type == ecodes.EV_ABS:
-                if event.code == ecodes.ABS_X:
-                    x = event.value
-                elif event.code == ecodes.ABS_Y:
-                    y = event.value
-
-                # Jeśli współrzędne są dostępne, przetwarzamy Touch Down
-                if awaiting_coordinates and x is not None and y is not None:
-
-                    print(f"Processing Touch Down: X={x}, Y={y}")
-                    key = map_touch_to_key(x, y, layout)
-                    if key == "Fn":
-                        layout = generate_keyboard_layout(touch.max_x, touch.max_y, stride)                        
-                    if key and pressed_key is None:
-                        send_key_to_system(ui, key, is_pressed=True)
-                        pressed_key = key
-                    awaiting_coordinates = False  # Współrzędne zostały przetworzone
-
-            elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
-                if event.value == 1:  # Touch Down
-                    print(f"Touch Down initiated, waiting for coordinates.")
-                    awaiting_coordinates = True
-                elif event.value == 0:  # Touch Up
-                    print(f"Touch Up: X={x}, Y={y}")
-                    if pressed_key:
-                        send_key_to_system(ui, pressed_key, is_pressed=False)
-                        pressed_key = None  # Zresetuj naciśnięty klawisz
-                    x, y = None, None  # Reset współrzędnych
-                    awaiting_coordinates = False  # Nie oczekujemy już współrzędnych
-            """
-    except Exception as e:
+    except IndexError as e:
         print(f"Błąd: {e}")
 
 
