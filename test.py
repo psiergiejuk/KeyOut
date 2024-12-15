@@ -13,7 +13,7 @@ class FB_Manger:
     SEC_COLOR = (255, 255, 0)
     FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 
-    def __init__(self, device="/dev/fb0", start_x=800, start_y=0, width=1920, height=1080, font_path=None):
+    def __init__(self, device="/dev/fb0", start_x=800, start_y=0, width=1920, height=1200, font_path=None):
         if font_path is None:
             font_path = self.FONT
         self.height = height
