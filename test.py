@@ -4,6 +4,7 @@ import freetype
 import mmap
 import queue
 from touch import TouchProcessor
+from keyboard import KeyboardManager
 
 
 class FB_Manger:
@@ -22,6 +23,13 @@ class FB_Manger:
         self.stride = self.width * self.BYTE_PER_PIXEL
         self.fb_map = mmap.mmap(self.fb.fileno(), self.stride * self.height, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
         self.face = freetype.Face(font_path)
+
+        """ 
+        import numpy as np
+        buffer = np.zeros((height, width, 4), dtype=np.uint8)  # 4 for RGBA
+        buffer[:, :, 0] = 255  # Set red channel
+        fb_mmap.write(buffer.tobytes())
+        """
 
     def set_pixel(self, x, y, color=None):
         if color is None:
@@ -198,13 +206,13 @@ def send_key_to_system(ui, key, is_pressed=True):
 def main():
     """Główna funkcja programu."""
     try:
+        SCALE = 0.2214
         event_queue = queue.Queue()
         touch = TouchProcessor(event_queue)
         touch.start()
         fbm = FB_Manger()
         bytes_per_pixel = 4
-        stride = touch.max_x * bytes_per_pixel
-        layout = generate_keyboard_layout(fbm, touch.max_x, touch.max_y, stride)
+        keyboard = KeyboardManager(fbm, int(touch.max_x * SCALE), int(touch.max_y * SCALE))
 
 
         while True:
