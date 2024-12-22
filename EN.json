@@ -1,0 +1,74 @@
+{
+  "keyboard": {
+    "layout": "EN",
+    "AD1": [
+        [
+          {"label": "Esc", "width": 1.5},
+          {"label": "1", "width": 1.0},
+          {"label": "2", "width": 1.0},
+          {"label": "3", "width": 1.0},
+          {"label": "4", "width": 1.0},
+          {"label": "5", "width": 1.0},
+          {"label": "6", "width": 1.0},
+          {"label": "7", "width": 1.0},
+          {"label": "8", "width": 1.0},
+          {"label": "9", "width": 1.0},
+          {"label": "0", "width": 1.0},
+          {"label": "Del", "width": 1.5}
+        ],
+        [
+          {"label": "Tab", "width": 1.5},
+          {"label": "q", "width": 1.0},
+          {"label": "w", "width": 1.0},
+          {"label": "e", "width": 1.0},
+          {"label": "r", "width": 1.0},
+          {"label": "t", "width": 1.0},
+          {"label": "y", "width": 1.0},
+          {"label": "u", "width": 1.0},
+          {"label": "i", "width": 1.0},
+          {"label": "o", "width": 1.0},
+          {"label": "p", "width": 1.0},
+          {"label": "Back", "width": 1.5}
+        ],
+        [
+          {"label": "CapsL", "width": 1.5},
+          {"label": "a", "width": 1.0},
+          {"label": "s", "width": 1.0},
+          {"label": "d", "width": 1.0},
+          {"label": "f", "width": 1.0},
+          {"label": "g", "width": 1.0},
+          {"label": "h", "width": 1.0},
+          {"label": "j", "width": 1.0},
+          {"label": "k", "width": 1.0},
+          {"label": "l", "width": 1.0},
+          {"label": "Enter", "width": 2.5}
+        ],
+        [
+          {"label": "Shift", "width": 2.0},
+          {"label": "z", "width": 1.0},
+          {"label": "x", "width": 1.0},
+          {"label": "c", "width": 1.0},
+          {"label": "v", "width": 1.0},
+          {"label": "b", "width": 1.0},
+          {"label": "n", "width": 1.0},
+          {"label": "m", "width": 1.0},
+          {"label": "Shift", "width": 2.0},
+          {"label": "Up", "width": 1.0},
+          {"label": "Enter", "width": 1.0}
+        ],
+	[
+          {"label": "Fn", "width": 1.0},
+          {"label": "Ctrl", "width": 1.0},
+          {"label": "Spec", "width": 1.0},
+          {"label": "Alt", "width": 1.0},
+          {"label": "Space", "width": 4.0},
+          {"label": "Alt", "width": 1.0},
+          {"label": "Ctrl", "width": 1.0},
+          {"label": "Left", "width": 1.0},
+          {"label": "Down", "width": 1.0},
+          {"label": "Right", "width": 1.0}
+        ]
+    ]
+  }
+}
+
