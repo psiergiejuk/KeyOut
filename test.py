@@ -212,7 +212,7 @@ def main():
         touch.start()
         fbm = FB_Manger()
         bytes_per_pixel = 4
-        keyboard = KeyboardManager(fbm, int(touch.max_x * SCALE), int(touch.max_y * SCALE))
+        keyboard = KeyboardManager(fbm)
 
 
         while True:
@@ -256,7 +256,7 @@ def main():
         pressed_key = None  # Śledzi aktualnie naciśnięty klawisz
         awaiting_coordinates = False  # Czy czekamy na współrzędne po Touch Down
         """
-    except IndexError as e:
+    except OSError as  e:
         print(f"Błąd: {e}")
 
 
