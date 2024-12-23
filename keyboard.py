@@ -5,6 +5,88 @@ import json
 import numpy as np
 
 
+class FB_Manger:
+    
+    BYTE_PER_PIXEL = 4
+    FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
+
+    def __init__(self, device="/dev/fb0", width=1920, height=1200, font_path=None):
+        if font_path is None:
+            font_path = self.FONT
+        self.height = height
+        self.width = width
+        self.fb = open(device, "r+b")
+        self.stride = self.width * self.BYTE_PER_PIXEL
+        self.fb_map = mmap.mmap(self.fb.fileno(), self.stride * self.height, mmap.MAP_SHARED, mmap.PROT_WRITE | mmap.PROT_READ)
+        self.face = freetype.Face(font_path)
+
+
+class VirtualKeyboard:
+
+    def __init__(self):
+        self.keyboard = UInput(
+            {
+                ecodes.EV_KEY: [
+                    ecodes.KEY_ESC, ecodes.KEY_F1, ecodes.KEY_F2, ecodes.KEY_F3, ecodes.KEY_F4, ecodes.KEY_F5,
+                    ecodes.KEY_F6, ecodes.KEY_F7, ecodes.KEY_F8, ecodes.KEY_F9, ecodes.KEY_F10, ecodes.KEY_F11,
+                    ecodes.KEY_F12, ecodes.KEY_PRINT, ecodes.KEY_GRAVE, ecodes.KEY_1, ecodes.KEY_2, ecodes.KEY_3,
+                    ecodes.KEY_4, ecodes.KEY_5, ecodes.KEY_6, ecodes.KEY_7, ecodes.KEY_8, ecodes.KEY_9,
+                    ecodes.KEY_0, ecodes.KEY_MINUS, ecodes.KEY_EQUAL, ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_E,
+                    ecodes.KEY_R, ecodes.KEY_T, ecodes.KEY_Y, ecodes.KEY_U, ecodes.KEY_I, ecodes.KEY_O,
+                    ecodes.KEY_P, ecodes.KEY_LEFTBRACE, ecodes.KEY_RIGHTBRACE, ecodes.KEY_A, ecodes.KEY_S,
+                    ecodes.KEY_D, ecodes.KEY_F, ecodes.KEY_G, ecodes.KEY_H, ecodes.KEY_J, ecodes.KEY_K,
+                    ecodes.KEY_L, ecodes.KEY_SEMICOLON, ecodes.KEY_APOSTROPHE, ecodes.KEY_ENTER, ecodes.KEY_Z,
+                    ecodes.KEY_X, ecodes.KEY_C, ecodes.KEY_V, ecodes.KEY_B, ecodes.KEY_N, ecodes.KEY_M,
+                    ecodes.KEY_COMMA, ecodes.KEY_DOT, ecodes.KEY_SLASH, ecodes.KEY_LEFTSHIFT, ecodes.KEY_LEFTCTRL,
+                    ecodes.KEY_LEFTALT, ecodes.KEY_SPACE, ecodes.KEY_RIGHTALT, ecodes.KEY_RIGHTCTRL,
+                    ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_BACKSPACE,
+                ],
+                ecodes.EV_SYN: [],
+                ecodes.EV_MSC: [ecodes.MSC_SCAN],
+            },
+            name="Virtual Keyboard",
+        )
+    def map_touch_to_key(self, x, y, layout):
+        """Mapuje współrzędne dotyku na klawisz."""
+        for x_start, y_start, x_end, y_end, key in layout:
+            if x_start <= x < x_end and y_start <= y < y_end:
+                return key
+        return None
+
+
+    def send_key_to_system(self, ui, key, is_pressed=True):
+        """Wysyła klawisz do systemu jako input z klawiatury."""
+        special_keys = {
+            "Esc": ecodes.KEY_ESC,
+            "Ctrl": ecodes.KEY_LEFTCTRL,
+            "Alt": ecodes.KEY_LEFTALT,
+            "Shift": ecodes.KEY_LEFTSHIFT,
+            "Space": ecodes.KEY_SPACE,
+            "Enter": ecodes.KEY_ENTER,
+            "Fn": ecodes.KEY_FN,  # Jeśli Fn jest obsługiwane
+            "Up": ecodes.KEY_UP,
+            "Down": ecodes.KEY_DOWN,
+            "Left": ecodes.KEY_LEFT,
+            "Right": ecodes.KEY_RIGHT,
+            "Back": ecodes.KEY_BACKSPACE,
+        }
+
+        # Obsługa klawiszy funkcyjnych (F1-F12)
+        if key.startswith("F") and key[1:].isdigit():
+            key_event = getattr(ecodes, f"KEY_{key.upper()}", None)
+        elif key in special_keys:
+            key_event = special_keys[key]
+        else:
+            key_event = getattr(ecodes, f"KEY_{key.upper()}", None)
+
+        if key_event:
+            print(f"Sending: {key} -> {key_event} (pressed={is_pressed})")
+            ui.write(ecodes.EV_MSC, ecodes.MSC_SCAN, key_event)  # MSC_SCAN dla kompatybilności
+            ui.write(ecodes.EV_KEY, key_event, 1 if is_pressed else 0)
+            ui.syn()
+        else:
+            print(f"Unrecognized key: {key}")
+
 
 class KeyboardManager:
 
@@ -15,55 +97,61 @@ class KeyboardManager:
     ROWS_LEN = 13
     START_Y = 800
     BYTE_PER_PIXEL = 4
-    MAIN_COLOR = (100, 120, 100)
-    SEC_COLOR = (255, 255, 0)
+    MAIN_COLOR = (100, 100, 120, 0)
+    SEC_COLOR = (255, 0,  255, 0)
     FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
 
-    def __init__(self, fbm, layout=None):
+    def __init__(self, queue, layout=None):
         if layout is None:
             layout = "EN"
-        self.fbm = fbm
+        self.queue = queue
+        self.fbm = FB_Manger(font_path=self.FONT)
         self.layout = layout
         self.face = freetype.Face(self.FONT)
-        self.buffer = np.zeros((self.fbm.height, self.fbm.width, 4), dtype=np.uint8)  # 4 for RGBA
-        self.stride = self.fbm.width * self.BYTE_PER_PIXEL
+        self.buffer = np.zeros((4, self.fbm.height, self.fbm.width, 4), dtype=np.uint8)  # 4 for RGBA
         buffer_size = self.buffer.nbytes  # Size of the buffer in bytes
         self.row_height = int((self.fbm.height - self.START_Y) / 5 )-1  # Wysokość jednego rzędu
         self.col_widths = int(self.fbm.width / self.ROWS_LEN) -1  # Szerokość kolumn w każdym wierszu
-        self.start_offset = self.START_Y * self.stride
-        self.end_offset = self.start_offset + (self.fbm.height - self.START_Y) * self.stride
+        self.start_offset = self.START_Y * self.fbm.stride
+        self.end_offset = self.start_offset + (self.fbm.height - self.START_Y) * self.fbm.stride
+        self.keys = {}
 
         # Wczytanie JSON-a
         with open(self.LAYOUT[self.layout], "r") as file:
-            layout = []
             keyboard_config = json.load(file)
-            keyboard = keyboard_config["keyboard"]["AD1"]
-            for row_index, row in enumerate(keyboard):
-                y_start = row_index * self.row_height + self.START_Y
-                y_end = y_start + self.row_height
-                x_start = 0
-                for col_index, key in enumerate(row):
-                    x_end = x_start + int(self.col_widths * key["width"])
-                    layout.append((x_start, y_start, x_end, y_end, key))
-                    print((x_start, y_start, x_end, y_end, key))
-                    self.draw_rectangle_with_text(
-                        rect_x=int(x_start),
-                        rect_y=int(y_start),
-                        rect_w=int(x_end - x_start),
-                        rect_h=int(y_end - y_start),
-                        text=key["label"],
-                    )
-                    x_start = x_end
-        #self.fbm.fb.write(self.buffer.tobytes())
+            for index in range(4):
+                self.keys[index] = []
+                keyboard = keyboard_config["keyboard"][f"AD{1+index}"]
+                for row_index, row in enumerate(keyboard):
+                    y_start = row_index * self.row_height + self.START_Y
+                    y_end = y_start + self.row_height
+                    x_start = 0
+                    for col_index, key in enumerate(row):
+                        x_end = x_start + int(self.col_widths * key["width"])
+                        self.keys[index].append((x_start, y_start, x_end, y_end, key))
+                        self.draw_rectangle_with_text(
+                            rect_x=int(x_start),
+                            rect_y=int(y_start),
+                            rect_w=int(x_end - x_start),
+                            rect_h=int(y_end - y_start),
+                            text=key["label"],
+                            index=index,
+                        )
+                        x_start = x_end
         
-        print(self.start_offset, self.end_offset)
-        self.fbm.fb_map[self.start_offset:self.end_offset] = self.buffer[self.START_Y:self.fbm.height].tobytes()
 
-    def set_pixel(self, x, y, color=None):
+        self.index = 0
+
+
+
+    def show_keys(self):
+        self.fbm.fb_map[self.start_offset:self.end_offset] = self.buffer[self.index, self.START_Y:self.fbm.height].tobytes()
+
+    def set_pixel(self, x, y, index, color=None):
         if color is None:
             color = self.MAIN_COLOR
         if 0 <= x < self.fbm.width and 0 <= y < self.fbm.height:
-            self.buffer[y, x] = [0, 255, 0, 255]
+            self.buffer[index, y, x] = [0, 255, 0, 255]
 
     def render_char_with_freetype(self, char, font_path=None, font_size=48):
         """
@@ -95,7 +183,7 @@ class KeyboardManager:
 
         return rendered_char
 
-    def draw_rectangle_with_text(self, rect_x=200, rect_y=150, rect_w=400, rect_h=300, text=""):
+    def draw_rectangle_with_text(self, rect_x=200, rect_y=150, rect_w=400, rect_h=300, text="", index=0):
         """
         Rysuje pusty w środku kwadrat z napisem w środku.
 
@@ -112,10 +200,10 @@ class KeyboardManager:
         """
         try:
             # Rysowanie górnej i dolnej krawędzi
-            self.buffer[rect_y:(rect_y + rect_h), rect_x] = [0, 255, 0, 255]
-            self.buffer[rect_y:(rect_y + rect_h), (rect_x + rect_w)] = [0,155,155,155]
-            self.buffer[rect_y, rect_x:rect_x + rect_w] = [0, 255, 0, 255]
-            self.buffer[rect_y+ rect_h, rect_x:rect_x + rect_w] = [0,155,155,155]
+            self.buffer[index, rect_y:(rect_y + rect_h), rect_x] = self.MAIN_COLOR
+            self.buffer[index, rect_y:(rect_y + rect_h), (rect_x + rect_w)] = self.MAIN_COLOR
+            self.buffer[index, rect_y, rect_x:rect_x + rect_w] = self.MAIN_COLOR
+            self.buffer[index, rect_y+ rect_h, rect_x:rect_x + rect_w] = self.MAIN_COLOR
 
 
             # Rysowanie tekstu w środku
@@ -129,7 +217,7 @@ class KeyboardManager:
                 for row_idx, row in enumerate(bitmap):
                     for col_idx, pixel in enumerate(row):
                         if pixel:  # Jeśli piksel aktywny
-                            self.set_pixel(text_start_x + col_idx, text_start_y + row_idx, (255, 255, 255))
+                            self.set_pixel(text_start_x + col_idx, text_start_y + row_idx, index, self.SEC_COLOR)
                 text_start_x += len(bitmap[0]) + 2  # Przesunięcie dla kolejnego znaku
 
         except PermissionError:
@@ -139,46 +227,3 @@ class KeyboardManager:
         #except Exception as e:
         #    print(f"Wystąpił błąd: {e}")
 
-
-def generate_keyboard_layout(fbm, max_x, max_y, stride):
-    """Generuje układ klawiatury w stylu ThinkPad."""
-    # Parametry ekranu i prostokąta
-    screen_width = 1920  # szerokość ekranu w pikselach
-    screen_height = 1200  # wysokość ekranu w pikselach
-    rect_color = (100, 128, 100)  # czerwony kolor linii (RGB)
-    text_color = (255, 255, 0)  # Żółty
-
-    rows = [
-        ["Esc", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "Back"],
-        ["~", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
-        ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "Enter"],
-        ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter", "Enter"],
-        ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Up", "Shift"],
-        ["Fn", "Ctrl", "Alt", "Space", "Space", "Alt", "Ctrl", "Left", "Down", "Right"]
-    ]
-
-    layout = []
-    row_height = max_y/2 // len(rows)  # Wysokość jednego rzędu
-    col_widths = [max_x // len(row) for row in rows]  # Szerokość kolumn w każdym wierszu
-
-    for row_index, row in enumerate(rows):
-        y_start = row_index * row_height + max_y/2
-        y_end = y_start + row_height
-        col_width = col_widths[row_index]
-
-        for col_index, key in enumerate(row):
-            x_start = col_index * col_width
-            x_end = x_start + col_width
-            layout.append((x_start, y_start, x_end, y_end, key))
-            # Rysowanie prostokąta z tekstem
-            fbm.draw_rectangle_with_text(
-                width=screen_width ,
-                height=screen_height,
-                rect_x=int(x_start*0.22),
-                rect_y=int(y_start*0.22),
-                rect_w=int(0.22 * (x_end - x_start)),
-                rect_h=int(0.22 * (y_end - y_start)),
-                text=key,
-            )
-
-    return layout
