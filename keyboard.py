@@ -46,7 +46,8 @@ class VirtualKeyboard:
                     ecodes.KEY_X, ecodes.KEY_C, ecodes.KEY_V, ecodes.KEY_B, ecodes.KEY_N, ecodes.KEY_M,
                     ecodes.KEY_COMMA, ecodes.KEY_DOT, ecodes.KEY_SLASH, ecodes.KEY_LEFTSHIFT, ecodes.KEY_LEFTCTRL,
                     ecodes.KEY_LEFTALT, ecodes.KEY_SPACE, ecodes.KEY_RIGHTALT, ecodes.KEY_RIGHTCTRL,
-                    ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_BACKSPACE,
+                    ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_BACKSPACE, ecodes.KEY_TAB,
+                    ecodes.KEY_DOLLAR,
                 ],
                 ecodes.EV_SYN: [],
                 ecodes.EV_MSC: [ecodes.MSC_SCAN],
@@ -58,23 +59,43 @@ class VirtualKeyboard:
         key = self.map_touch_to_key(data.x, data.y)
         if key is None:
             return 0,0
-        if keys["label"] == "Shifth":
+        if key["label"] == "Shift":
             self.shift = data.action 
-        if keys["label"] == "Alt":
+        if key["label"] == "Alt":
             self.alt = data.action 
             
-        if key["label"] == "Shifth":
-            #tu skączyłeś 
-            if "Shift" in self.press_keys and "Alt" in self.press_keys:
+
+        if key["label"] == "Shift":
+            if data.action:
+                if self.alt:
                     self.parent.index = 3
-            elif "Shift" in self.press_keys:
+                else:
                     self.parent.index = 1
-            elif "Alt" in self.press_keys:
+            else:
+                if self.alt:
+                    self.parent.index = 2
+                else:
+                    self.parent.index = 0
+            self.parent.show_keys()
+        if key["label"] == "Alt":
+            if data.action:
+                if self.shift:
+                    self.parent.index = 3
+                else:
                     self.parent.index = 2
             else:
-                self.parent.index = 0
+                if self.shift:
+                    self.parent.index = 1
+                else:
+                    self.parent.index = 0
             self.parent.show_keys()
+
         print(key['label'], data.action)
+        if "code" in key:
+
+            self.keyboard.write(ecodes.EV_MSC, ecodes.MSC_SCAN, key["code"])  # MSC_SCAN dla kompatybilności
+            self.keyboard.write(ecodes.EV_KEY, key["code"], data.action)
+            self.keyboard.syn()
         return 0,0
 
     def map_touch_to_key(self, x, y):
