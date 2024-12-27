@@ -1,8 +1,10 @@
 import struct
 import mmap
 import freetype
+import time
 import json
 import numpy as np
+from evdev import UInput, ecodes
 
 
 class FB_Manger:
@@ -23,7 +25,12 @@ class FB_Manger:
 
 class VirtualKeyboard:
 
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
+        self.shift = 0
+        self.alt = 0
+        self.spec = 0
+        self.fn = 0
         self.keyboard = UInput(
             {
                 ecodes.EV_KEY: [
@@ -46,9 +53,33 @@ class VirtualKeyboard:
             },
             name="Virtual Keyboard",
         )
-    def map_touch_to_key(self, x, y, layout):
+
+    def input(self, data):
+        key = self.map_touch_to_key(data.x, data.y)
+        if key is None:
+            return 0,0
+        if keys["label"] == "Shifth":
+            self.shift = data.action 
+        if keys["label"] == "Alt":
+            self.alt = data.action 
+            
+        if key["label"] == "Shifth":
+            #tu skączyłeś 
+            if "Shift" in self.press_keys and "Alt" in self.press_keys:
+                    self.parent.index = 3
+            elif "Shift" in self.press_keys:
+                    self.parent.index = 1
+            elif "Alt" in self.press_keys:
+                    self.parent.index = 2
+            else:
+                self.parent.index = 0
+            self.parent.show_keys()
+        print(key['label'], data.action)
+        return 0,0
+
+    def map_touch_to_key(self, x, y):
         """Mapuje współrzędne dotyku na klawisz."""
-        for x_start, y_start, x_end, y_end, key in layout:
+        for x_start, y_start, x_end, y_end, key in self.parent.keys[self.parent.index]:
             if x_start <= x < x_end and y_start <= y < y_end:
                 return key
         return None
@@ -104,9 +135,11 @@ class KeyboardManager:
     def __init__(self, queue, layout=None):
         if layout is None:
             layout = "EN"
+        self.index = 0
         self.queue = queue
         self.fbm = FB_Manger(font_path=self.FONT)
         self.layout = layout
+        self.vkey = VirtualKeyboard(self)
         self.face = freetype.Face(self.FONT)
         self.buffer = np.zeros((4, self.fbm.height, self.fbm.width, 4), dtype=np.uint8)  # 4 for RGBA
         buffer_size = self.buffer.nbytes  # Size of the buffer in bytes
@@ -121,7 +154,7 @@ class KeyboardManager:
             keyboard_config = json.load(file)
             for index in range(4):
                 self.keys[index] = []
-                keyboard = keyboard_config["keyboard"][f"AD{1+index}"]
+                keyboard = keyboard_config["keyboard"][f"AD{index}"]
                 for row_index, row in enumerate(keyboard):
                     y_start = row_index * self.row_height + self.START_Y
                     y_end = y_start + self.row_height
@@ -140,7 +173,16 @@ class KeyboardManager:
                         x_start = x_end
         
 
-        self.index = 0
+
+
+    def main(self):
+        self.show_keys()
+        while True:
+            if self.queue.empty():
+                time.sleep(0.05)
+                continue
+            data = self.queue.get()
+            update, index = self.vkey.input(data)
 
 
 

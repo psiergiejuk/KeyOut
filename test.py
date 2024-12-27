@@ -7,7 +7,6 @@ from keyboard import KeyboardManager
 
 
 
-
 def main():
     """Główna funkcja programu."""
     try:
@@ -17,10 +16,9 @@ def main():
         touch.start()
         keyboard = KeyboardManager(event_queue)
         keyboard.show_keys()
+        keyboard.main()
 
 
-        while True:
-            time.sleep(1)
     except OSError as  e:
         print(f"Błąd: {e}")
 
