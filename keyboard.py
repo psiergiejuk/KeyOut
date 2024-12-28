@@ -100,10 +100,11 @@ class VirtualKeyboard:
 
     def map_touch_to_key(self, x, y):
         """Mapuje współrzędne dotyku na klawisz."""
-        for x_start, y_start, x_end, y_end, key in self.parent.keys[self.parent.index]:
-            if x_start <= x < x_end and y_start <= y < y_end:
-                return key
-        return None
+        #for x_start, y_start, x_end, y_end, key in self.parent.keys[self.parent.index]:
+        #    if x_start <= x < x_end and y_start <= y < y_end:
+        #        return key
+        return self.parent.keys[self.parent.index][self.parent.map[x,y][4]]
+        #return None
 
 
     def send_key_to_system(self, ui, key, is_pressed=True):
@@ -163,6 +164,7 @@ class KeyboardManager:
         self.vkey = VirtualKeyboard(self)
         self.face = freetype.Face(self.FONT)
         self.buffer = np.zeros((4, self.fbm.height, self.fbm.width, 4), dtype=np.uint8)  # 4 for RGBA
+        self.map = np.zeros((self.fbm.height, self.fbm.width), dtype=np.uint8)
         buffer_size = self.buffer.nbytes  # Size of the buffer in bytes
         self.row_height = int((self.fbm.height - self.START_Y) / 5 )-1  # Wysokość jednego rzędu
         self.col_widths = int(self.fbm.width / self.ROWS_LEN) -1  # Szerokość kolumn w każdym wierszu
@@ -193,7 +195,8 @@ class KeyboardManager:
                         )
                         x_start = x_end
         
-
+        for index, (x_start, y_start, x_end, y_end, key) in enumerate(self.keys[self.index]):
+            self.map[x_start:x_start, y_start:y_end] = index
 
 
     def main(self):
