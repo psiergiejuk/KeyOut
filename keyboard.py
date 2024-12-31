@@ -159,13 +159,13 @@ class VirtualKeyboard:
         key = self.map_touch_to_key(data.x, data.y)
         if key is None:
             return 0,0
-        if key["label"] == "Shift":
+        if key["label"] == "\u21EB":
             self.shift = data.action 
         if key["label"] == "Alt":
             self.alt = data.action 
             
 
-        if key["label"] == "Shift":
+        if key["label"] == "\u21EB":
             if data.action:
                 if self.alt:
                     self.parent.index = 3
