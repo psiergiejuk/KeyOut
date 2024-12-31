@@ -2,8 +2,8 @@ import os
 import time
 import struct
 import queue
-from touch import TouchProcessor
-from keyboard import KeyboardManager
+from KeyOut.touch import TouchProcessor
+from KeyOut.keyboard import KeyboardManager
 
 
 
@@ -19,7 +19,7 @@ def main():
         keyboard.main()
 
 
-    except OSError as  e:
+    except IndexError as  e:
         print(f"Błąd: {e}")
 
 

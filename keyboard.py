@@ -4,7 +4,119 @@ import freetype
 import time
 import json
 import numpy as np
-from evdev import UInput, ecodes
+import threading
+import queue
+import time
+from evdev import UInput, InputDevice, categorize, ecodes, list_devices
+
+class Event:
+
+    def __init__(self):
+        self.x = -1
+        self.y = -1
+        self.slot = -1
+        self.id_ = -1
+        self.event = None
+
+    def __repr__(self):
+        return f"<Event ID:{self.id_} x:{self.x} y:{self.y} Slot:{self.slot} Event: {self.event}>"
+
+class Action:
+
+    UP = 0
+    DOWN = 1
+
+    def __init__(self, event):
+        self.x = event.x
+        self.y = event.y
+        self.action = event.event
+
+    def __repr__(self):
+        return f"<Action x:{self.x} y:{self.y}, T:{self.action}>"
+
+class TouchProcessor(threading.Thread):
+
+    RESOLUTON_CALC = 0.22
+
+    def __init__(self, output_queue, device_name="Finger"):
+        super().__init__()
+        self.device = self.find_touch_device(device_name)
+        abs_info = self.device.capabilities().get(ecodes.EV_ABS, [])
+        self.max_x = None
+        self.max_y = None
+        for code, abs_data in abs_info:
+            if code == ecodes.ABS_X:
+                self.max_x = abs_data.max
+            elif code == ecodes.ABS_Y:
+                self.max_y = abs_data.max
+        self.output_queue = output_queue
+        self.running = True  # Flaga kontroli wątku
+        
+    def find_touch_device(self, name):
+        """Znajduje urządzenie dotykowe po nazwie."""
+        devices = [InputDevice(path) for path in list_devices()]
+        for device in devices:
+            if name.lower() in device.name.lower():
+                return device
+        raise FileNotFoundError(f"Nie znaleziono urządzenia o nazwie zawierającej: {device_name}")
+
+    def run(self):
+        while self.running:
+            try:
+                track = {}  # Przechowuje informacje o slotach
+                current_slot = None  # Obecnie aktywny slot
+                action = []
+
+                for event in self.device.read_loop():
+                    if not self.running:
+                        return  # wyjście przy zamknięciu
+                    if event.type == ecodes.EV_ABS:
+                        if event.code == ecodes.ABS_MT_SLOT:  # Zmiana slotu
+                            current_slot = event.value
+                        elif event.code == ecodes.ABS_MT_TRACKING_ID:
+                            id_ = event.value
+                            if id_ > 0:
+                                if current_slot is not None:
+                                    track[current_slot] = Event()
+                                    track[current_slot].id_ = id_
+                                    track[current_slot].event = Action.DOWN
+                                else:
+                                    current_slot = 0
+                                    track[current_slot] = Event()
+                                    track[current_slot].id_ = id_
+                                    track[current_slot].event = Action.DOWN
+                                action.append(current_slot)
+                            else:
+                                if current_slot is not None:
+                                    if current_slot in track:
+                                        track[current_slot].event = Action.UP
+                                        self.output_queue.put(Action(track[current_slot]))
+                                current_slot = None
+                        elif event.code == ecodes.ABS_MT_POSITION_X:  # Współrzędna X
+                            if current_slot in track:
+                                track[current_slot].x = int(event.value * self.RESOLUTON_CALC)
+                        elif event.code == ecodes.ABS_MT_POSITION_Y:  # Współrzędna Y
+                            if current_slot in track:
+                                track[current_slot].y = int(event.value * self.RESOLUTON_CALC)
+                    elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
+                        if current_slot is not None:
+                            track[current_slot].event = event.value
+                            if event.value == 0:
+                                if current_slot in track:
+                                    track[current_slot].event = Action.UP
+                                    old.append(track.pop(current_slot))
+                    elif event.type == ecodes.EV_SYN:
+                        if action:
+                            self.output_queue.put(Action(track[action.pop()]))
+            except Exception as Err:
+                # Brak eventów w kolejce
+                print(Err)
+                continue
+
+    def stop(self):
+        """Zatrzymaj wątek."""
+        self.running = False
+
 
 
 class FB_Manger:
@@ -31,26 +143,14 @@ class VirtualKeyboard:
         self.alt = 0
         self.spec = 0
         self.fn = 0
+        all_keys = [code for value, code in ecodes.ecodes.items() if value.startswith("KEY_")]
+        all_keys = list(set(all_keys))
+        print(len(all_keys))
         self.keyboard = UInput(
             {
-                ecodes.EV_KEY: [
-                    ecodes.KEY_ESC, ecodes.KEY_F1, ecodes.KEY_F2, ecodes.KEY_F3, ecodes.KEY_F4, ecodes.KEY_F5,
-                    ecodes.KEY_F6, ecodes.KEY_F7, ecodes.KEY_F8, ecodes.KEY_F9, ecodes.KEY_F10, ecodes.KEY_F11,
-                    ecodes.KEY_F12, ecodes.KEY_PRINT, ecodes.KEY_GRAVE, ecodes.KEY_1, ecodes.KEY_2, ecodes.KEY_3,
-                    ecodes.KEY_4, ecodes.KEY_5, ecodes.KEY_6, ecodes.KEY_7, ecodes.KEY_8, ecodes.KEY_9,
-                    ecodes.KEY_0, ecodes.KEY_MINUS, ecodes.KEY_EQUAL, ecodes.KEY_Q, ecodes.KEY_W, ecodes.KEY_E,
-                    ecodes.KEY_R, ecodes.KEY_T, ecodes.KEY_Y, ecodes.KEY_U, ecodes.KEY_I, ecodes.KEY_O,
-                    ecodes.KEY_P, ecodes.KEY_LEFTBRACE, ecodes.KEY_RIGHTBRACE, ecodes.KEY_A, ecodes.KEY_S,
-                    ecodes.KEY_D, ecodes.KEY_F, ecodes.KEY_G, ecodes.KEY_H, ecodes.KEY_J, ecodes.KEY_K,
-                    ecodes.KEY_L, ecodes.KEY_SEMICOLON, ecodes.KEY_APOSTROPHE, ecodes.KEY_ENTER, ecodes.KEY_Z,
-                    ecodes.KEY_X, ecodes.KEY_C, ecodes.KEY_V, ecodes.KEY_B, ecodes.KEY_N, ecodes.KEY_M,
-                    ecodes.KEY_COMMA, ecodes.KEY_DOT, ecodes.KEY_SLASH, ecodes.KEY_LEFTSHIFT, ecodes.KEY_LEFTCTRL,
-                    ecodes.KEY_LEFTALT, ecodes.KEY_SPACE, ecodes.KEY_RIGHTALT, ecodes.KEY_RIGHTCTRL,
-                    ecodes.KEY_UP, ecodes.KEY_DOWN, ecodes.KEY_LEFT, ecodes.KEY_RIGHT, ecodes.KEY_BACKSPACE, ecodes.KEY_TAB,
-                    ecodes.KEY_DOLLAR,
-                ],
-                ecodes.EV_SYN: [],
-                ecodes.EV_MSC: [ecodes.MSC_SCAN],
+                ecodes.EV_KEY: all_keys[:400],
+                #ecodes.EV_SYN: [],
+                #ecodes.EV_MSC: [ecodes.MSC_SCAN],
             },
             name="Virtual Keyboard",
         )
@@ -93,62 +193,29 @@ class VirtualKeyboard:
         print(key['label'], data.action)
         if "code" in key:
 
-            self.keyboard.write(ecodes.EV_MSC, ecodes.MSC_SCAN, key["code"])  # MSC_SCAN dla kompatybilności
+            print
+            #self.keyboard.write(ecodes.EV_MSC, ecodes.MSC_SCAN, key["code"])  # MSC_SCAN dla kompatybilności
             self.keyboard.write(ecodes.EV_KEY, key["code"], data.action)
             self.keyboard.syn()
         return 0,0
 
     def map_touch_to_key(self, x, y):
         """Mapuje współrzędne dotyku na klawisz."""
-        #for x_start, y_start, x_end, y_end, key in self.parent.keys[self.parent.index]:
-        #    if x_start <= x < x_end and y_start <= y < y_end:
-        #        return key
-        return self.parent.keys[self.parent.index][self.parent.map[x,y][4]]
-        #return None
+        id_ = self.parent.map[y,x]
+        if id_ == 0:
+            return None
+        return self.parent.keys[self.parent.index][id_ - 1][4]
 
-
-    def send_key_to_system(self, ui, key, is_pressed=True):
-        """Wysyła klawisz do systemu jako input z klawiatury."""
-        special_keys = {
-            "Esc": ecodes.KEY_ESC,
-            "Ctrl": ecodes.KEY_LEFTCTRL,
-            "Alt": ecodes.KEY_LEFTALT,
-            "Shift": ecodes.KEY_LEFTSHIFT,
-            "Space": ecodes.KEY_SPACE,
-            "Enter": ecodes.KEY_ENTER,
-            "Fn": ecodes.KEY_FN,  # Jeśli Fn jest obsługiwane
-            "Up": ecodes.KEY_UP,
-            "Down": ecodes.KEY_DOWN,
-            "Left": ecodes.KEY_LEFT,
-            "Right": ecodes.KEY_RIGHT,
-            "Back": ecodes.KEY_BACKSPACE,
-        }
-
-        # Obsługa klawiszy funkcyjnych (F1-F12)
-        if key.startswith("F") and key[1:].isdigit():
-            key_event = getattr(ecodes, f"KEY_{key.upper()}", None)
-        elif key in special_keys:
-            key_event = special_keys[key]
-        else:
-            key_event = getattr(ecodes, f"KEY_{key.upper()}", None)
-
-        if key_event:
-            print(f"Sending: {key} -> {key_event} (pressed={is_pressed})")
-            ui.write(ecodes.EV_MSC, ecodes.MSC_SCAN, key_event)  # MSC_SCAN dla kompatybilności
-            ui.write(ecodes.EV_KEY, key_event, 1 if is_pressed else 0)
-            ui.syn()
-        else:
-            print(f"Unrecognized key: {key}")
 
 
 class KeyboardManager:
 
     LAYOUT = {
-            "EN": "EN.json",
-            "PL": "PL.json",
+            "EN": "/home/siergiej/soft/KeyOut/EN.json",
+            "PL": "/home/siergiej/soft/KeyOut/EN.json",
             }
     ROWS_LEN = 13
-    START_Y = 800
+    START_Y = 650
     BYTE_PER_PIXEL = 4
     MAIN_COLOR = (100, 100, 120, 0)
     SEC_COLOR = (255, 0,  255, 0)
@@ -196,7 +263,7 @@ class KeyboardManager:
                         x_start = x_end
         
         for index, (x_start, y_start, x_end, y_end, key) in enumerate(self.keys[self.index]):
-            self.map[x_start:x_start, y_start:y_end] = index
+            self.map[y_start:y_end, x_start:x_end] = index + 1
 
 
     def main(self):
@@ -228,7 +295,7 @@ class KeyboardManager:
         :param font_size: Rozmiar czcionki (w punktach).
         :return: Bitmapa (lista wierszy, gdzie 1 = piksel aktywny, 0 = piksel nieaktywny).
         """
-        self.face.set_char_size(font_size * 64)
+        self.face.set_char_size(font_size * 100)
 
         # Załaduj znak
         self.face.load_char(char)
@@ -292,4 +359,21 @@ class KeyboardManager:
             print(f"Urządzenie {device} nie istnieje.")
         #except Exception as e:
         #    print(f"Wystąpił błąd: {e}")
+
+def main():
+    """Główna funkcja programu."""
+    try:
+        SCALE = 0.2214
+        event_queue = queue.Queue()
+        touch = TouchProcessor(event_queue)
+        touch.start()
+        keyboard = KeyboardManager(event_queue)
+        keyboard.show_keys()
+        keyboard.main()
+    except Exception as e:
+        print(e)
+
+
+if __name__ == "__main__":
+    main()
 
