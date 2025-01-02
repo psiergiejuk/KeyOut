@@ -137,6 +137,19 @@ class FB_Manger:
 
 class VirtualKeyboard:
 
+    ACTION_MAP = {
+            #(FN Shift Alt)
+            (0, 0, 0): 0,
+            (1, 0, 0): 4,
+            (1, 0, 1): 4,
+            (1, 1, 0): 5,
+            (1, 1, 1): 5,
+            (0, 1, 0): 1,
+            (0, 1, 1): 3,
+            (0, 0, 1): 2,
+            }
+
+
     def __init__(self, parent):
         self.parent = parent
         self.shift = 0
@@ -163,9 +176,27 @@ class VirtualKeyboard:
             self.shift = data.action 
         if key["label"] == "Alt":
             self.alt = data.action 
-            
+        if key["label"] == "Fn":
+            self.fn = data.action 
+        if key["label"] in ("Fn", "Alt", "\u21EB"):
+            self.parent.index = self.ACTION_MAP[(self.fn, self.shift, self.alt)]
+            self.parent.show_keys()
 
-        if key["label"] == "\u21EB":
+        
+        """if key["label"] == "Fn":
+            if data.action:
+                if self.shift:
+                    self.parent.index = 5
+                else:
+                    self.parent.index = 4
+            else:
+                if self.shift:
+                    self.parent.index = 1
+                else:
+                    self.parent.index = 0
+            self.parent.show_keys()
+
+        elif key["label"] == "\u21EB":
             if data.action:
                 if self.alt:
                     self.parent.index = 3
@@ -177,7 +208,7 @@ class VirtualKeyboard:
                 else:
                     self.parent.index = 0
             self.parent.show_keys()
-        if key["label"] == "Alt":
+        elif key["label"] == "Alt":
             if data.action:
                 if self.shift:
                     self.parent.index = 3
@@ -189,7 +220,7 @@ class VirtualKeyboard:
                 else:
                     self.parent.index = 0
             self.parent.show_keys()
-
+        """
         print(key['label'], data.action)
         if "code" in key:
 
@@ -220,6 +251,7 @@ class KeyboardManager:
     MAIN_COLOR = (100, 100, 120, 0)
     SEC_COLOR = (255, 0,  255, 0)
     FONT = "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
+    KEYS = 6
 
     def __init__(self, queue, layout=None):
         if layout is None:
@@ -230,7 +262,7 @@ class KeyboardManager:
         self.layout = layout
         self.vkey = VirtualKeyboard(self)
         self.face = freetype.Face(self.FONT)
-        self.buffer = np.zeros((4, self.fbm.height, self.fbm.width, 4), dtype=np.uint8)  # 4 for RGBA
+        self.buffer = np.zeros((self.KEYS, self.fbm.height, self.fbm.width, 4), dtype=np.uint8)  # 4 for RGBA
         self.map = np.zeros((self.fbm.height, self.fbm.width), dtype=np.uint8)
         buffer_size = self.buffer.nbytes  # Size of the buffer in bytes
         self.row_height = int((self.fbm.height - self.START_Y) / 5 )-1  # Wysokość jednego rzędu
@@ -242,7 +274,7 @@ class KeyboardManager:
         # Wczytanie JSON-a
         with open(self.LAYOUT[self.layout], "r") as file:
             keyboard_config = json.load(file)
-            for index in range(4):
+            for index in range(self.KEYS):
                 self.keys[index] = []
                 keyboard = keyboard_config["keyboard"][f"AD{index}"]
                 for row_index, row in enumerate(keyboard):
@@ -370,7 +402,8 @@ def main():
         keyboard = KeyboardManager(event_queue)
         keyboard.show_keys()
         keyboard.main()
-    except Exception as e:
+    #except Exception as e:
+    except KeyError as e:
         print(e)
 
 
