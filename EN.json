@@ -390,7 +390,7 @@
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
-          {"label": "ż", "width": 1.0, "code": 44 },
+          {"label": "XPOWER", "width": 1.0, "code": 116 },
           {"label": "ź", "width": 1.0, "code": 45 },
           {"label": "ć", "width": 1.0, "code": 46 },
           {"label": "v", "width": 1.0, "code": 47 },
