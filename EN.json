@@ -14,7 +14,7 @@
           {"label": "8", "width": 1.0, "code": 9 },
           {"label": "9", "width": 1.0, "code": 10 },
           {"label": "0", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 14 }
+          {"label": "Del", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -83,7 +83,7 @@
           {"label": "*", "width": 1.0, "code": 9 },
           {"label": "(", "width": 1.0, "code": 10 },
           {"label": ")", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 14 }
+          {"label": "Del", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -152,7 +152,7 @@
           {"label": "*", "width": 1.0, "code": 9 },
           {"label": "(", "width": 1.0, "code": 10 },
           {"label": ")", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 14 }
+          {"label": "Del", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -221,7 +221,7 @@
           {"label": "8", "width": 1.0, "code": 9 },
           {"label": "9", "width": 1.0, "code": 10 },
           {"label": "0", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 14 }
+          {"label": "Del", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -290,7 +290,7 @@
           {"label": "F8", "width": 1.0, "code": 66 },
           {"label": "F9", "width": 1.0, "code": 67 },
           {"label": "F10", "width": 1.0, "code": 68 },
-          {"label": "Del", "width": 1.5, "code": 14 }
+          {"label": "Del", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -308,9 +308,9 @@
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
-          {"label": "vOut", "width": 1.0, "code": 113 },
-          {"label": "vUp", "width": 1.0, "code": 114 },
-          {"label": "vDown", "width": 1.0, "code": 115 },
+          {"label": "xx", "width": 1.0, "code": 113 },
+          {"label": "++", "width": 1.0, "code": 114 },
+          {"label": "--", "width": 1.0, "code": 115 },
           {"label": "f", "width": 1.0, "code": 33 },
           {"label": "g", "width": 1.0, "code": 34 },
           {"label": "h", "width": 1.0, "code": 35 },
@@ -359,7 +359,7 @@
           {"label": "F8", "width": 1.0, "code": 66 },
           {"label": "F9", "width": 1.0, "code": 67 },
           {"label": "F10", "width": 1.0, "code": 68 },
-          {"label": "Del", "width": 1.5, "code": 14 }
+          {"label": "Del", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -377,9 +377,9 @@
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
-          {"label": "vOut", "width": 1.0, "code": 113 },
-          {"label": "vUp", "width": 1.0, "code": 114 },
-          {"label": "vDown", "width": 1.0, "code": 115 },
+          {"label": "xx", "width": 1.0, "code": 113 },
+          {"label": "++", "width": 1.0, "code": 114 },
+          {"label": "--", "width": 1.0, "code": 115 },
           {"label": "f", "width": 1.0, "code": 33 },
           {"label": "g", "width": 1.0, "code": 34 },
           {"label": "h", "width": 1.0, "code": 35 },
