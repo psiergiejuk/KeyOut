@@ -6,5 +6,10 @@
 Minimal Linux Keypad A lightweight virtual keypad designed for Linux tablets with touchscreens. No X environment required—pure console magic, baby! 🖥️✨
 
 ThinkPad 10 with ArchLinux and no X
-![20241130_153848](https://github.com/user-attachments/assets/b2f59b71-0b4e-4824-a59e-92bc3612bbbb)
+
+![20250104_153018](https://github.com/user-attachments/assets/b2e7a4e2-5a4b-4cca-a15f-91626437ea9f)
+
+
+
+
 
