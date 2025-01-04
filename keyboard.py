@@ -155,6 +155,7 @@ class VirtualKeyboard:
         self.shift = 0
         self.alt = 0
         self.spec = 0
+        self.last = []
         self.fn = 0
         all_keys = [code for value, code in ecodes.ecodes.items() if value.startswith("KEY_")]
         all_keys = list(set(all_keys))
@@ -170,6 +171,7 @@ class VirtualKeyboard:
 
     def input(self, data):
         key = self.map_touch_to_key(data.x, data.y)
+
         if key is None:
             return 0,0
         if key["label"] == "\u21EB":
@@ -181,46 +183,6 @@ class VirtualKeyboard:
         if key["label"] in ("Fn", "Alt", "\u21EB"):
             self.parent.index = self.ACTION_MAP[(self.fn, self.shift, self.alt)]
             self.parent.show_keys()
-
-        
-        """if key["label"] == "Fn":
-            if data.action:
-                if self.shift:
-                    self.parent.index = 5
-                else:
-                    self.parent.index = 4
-            else:
-                if self.shift:
-                    self.parent.index = 1
-                else:
-                    self.parent.index = 0
-            self.parent.show_keys()
-
-        elif key["label"] == "\u21EB":
-            if data.action:
-                if self.alt:
-                    self.parent.index = 3
-                else:
-                    self.parent.index = 1
-            else:
-                if self.alt:
-                    self.parent.index = 2
-                else:
-                    self.parent.index = 0
-            self.parent.show_keys()
-        elif key["label"] == "Alt":
-            if data.action:
-                if self.shift:
-                    self.parent.index = 3
-                else:
-                    self.parent.index = 2
-            else:
-                if self.shift:
-                    self.parent.index = 1
-                else:
-                    self.parent.index = 0
-            self.parent.show_keys()
-        """
         print(key['label'], data.action)
         if "code" in key:
 

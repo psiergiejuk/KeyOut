@@ -1,0 +1,14 @@
+[Unit]
+Description=Virtual Keyboard Service
+After=multi-user.target
+Wants=getty.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/siergiej/soft/KeyOut/keyboard.py
+#usr/local/bin/virtual_keyboard.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

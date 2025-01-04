@@ -1,0 +1,6 @@
+screen -t MainWindow
+
+split
+resize 40
+focus down
+focus up
