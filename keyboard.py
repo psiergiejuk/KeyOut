@@ -257,6 +257,8 @@ class KeyboardManager:
         if layout is None:
             layout = "EN"
         self.index = 0
+        self.max_ascent = 0
+        self.max_descent = 0
         self.queue = queue
         self.fbm = FB_Manger(font_path=self.FONT)
         self.layout = layout
@@ -331,13 +333,17 @@ class KeyboardManager:
 
         # Załaduj znak
         self.face.load_char(char)
-        bitmap = self.face.glyph.bitmap
+        glyph = self.face.glyph
+        bitmap = glyph.bitmap
 
-        # Pobierz wymiary bitmapy
-        width, rows = bitmap.width, bitmap.rows
-        buffer = bitmap.buffer
+        # Pobierz metryki
+        width = bitmap.width
+        rows = bitmap.rows
+        top = glyph.bitmap_top  # Odległość od linii bazowej do góry bitmapy
+        descent = rows - top    # Odległość od linii bazowej do dołu bitmapy
 
         # Konwertuj dane bitmapy na tablicę 2D (1 = aktywny piksel, 0 = nieaktywny)
+        buffer = bitmap.buffer
         rendered_char = []
         for row in range(rows):
             row_data = []
@@ -346,7 +352,29 @@ class KeyboardManager:
                 row_data.append(1 if pixel > 0 else 0)
             rendered_char.append(row_data)
 
+        # Zaktualizuj metryki maksymalne
+        if not hasattr(self, 'max_ascent'):
+            self.max_ascent = 0
+        if not hasattr(self, 'max_descent'):
+            self.max_descent = 0
+
+        self.max_ascent = max(self.max_ascent, top)
+        self.max_descent = max(self.max_descent, descent)
+        offset = self.max_ascent - top
+        empty_row = [0] * width
+        rendered_char = [empty_row] * offset + rendered_char
+
         return rendered_char
+
+    def get_text_image_height(self):
+        """
+        Oblicza całkowitą wysokość obrazu potrzebną do wyrenderowania tekstu,
+        bazując na maksymalnym wznosie (ascent) i maksymalnym opadzie (descent).
+        """
+        if not hasattr(self, 'max_ascent') or not hasattr(self, 'max_descent'):
+            raise ValueError("Nie wyrenderowano żadnych znaków, aby obliczyć wysokość tekstu.")
+        
+        return self.max_ascent + self.max_descent
 
     def draw_rectangle_with_text(self, rect_x=200, rect_y=150, rect_w=400, rect_h=300, text="", index=0):
         """
@@ -372,11 +400,13 @@ class KeyboardManager:
 
 
             # Rysowanie tekstu w środku
-            char_width = 11  # Szerokość znaku (5 pikseli + 1 przerwy)
+            char_width = 18  # Szerokość znaku (5 pikseli + 1 przerwy)
             char_height = 14  # Wysokość znaku
-            text_start_x = rect_x + (rect_w - len(text) * char_width) // 2
+            text_start_x = rect_x + (rect_w - len(text) * (char_width + 2)) // 2
             text_start_y = rect_y + (rect_h - char_height) // 2
 
+            self.max_ascent = 0
+            self.max_descent = 0
             for char in text:
                 bitmap = self.render_char_with_freetype(char, font_size=20)
                 for row_idx, row in enumerate(bitmap):

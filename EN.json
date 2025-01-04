@@ -14,7 +14,7 @@
           {"label": "8", "width": 1.0, "code": 9 },
           {"label": "9", "width": 1.0, "code": 10 },
           {"label": "0", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 111 }
+          {"label": "\u2326", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -28,7 +28,7 @@
           {"label": "i", "width": 1.0, "code": 23 },
           {"label": "o", "width": 1.0, "code": 24 },
           {"label": "p", "width": 1.0, "code": 25 },
-          {"label": "\u21E4", "width": 1.5, "code": 14}
+          {"label": "\u232b", "width": 1.5, "code": 14}
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
@@ -41,7 +41,7 @@
           {"label": "j", "width": 1.0, "code": 36 },
           {"label": "k", "width": 1.0, "code": 37 },
           {"label": "l", "width": 1.0, "code": 38 },
-          {"label": "\u21B5", "width": 2.5, "code": 28}
+          {"label": "\u23ce", "width": 2.5, "code": 28}
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
@@ -61,7 +61,7 @@
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "Spec", "width": 1.0},
           {"label": "Alt", "width": 1.0, "code": 100 },
-          {"label": "Space", "width": 3.0, "code": 57 },
+          {"label": "\u23b5", "width": 3.0, "code": 57 },
           {"label": "Alt", "width": 1.0, "code": 100 },
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "\u2190", "width": 1.0, "code": 105 },
@@ -83,7 +83,7 @@
           {"label": "*", "width": 1.0, "code": 9 },
           {"label": "(", "width": 1.0, "code": 10 },
           {"label": ")", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 111 }
+          {"label": "\u2326", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -97,7 +97,7 @@
           {"label": "I", "width": 1.0, "code": 23 },
           {"label": "O", "width": 1.0, "code": 24 },
           {"label": "P", "width": 1.0, "code": 25 },
-          {"label": "\u21E4", "width": 1.5, "code": 14}
+          {"label": "\u232b", "width": 1.5, "code": 14}
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
@@ -110,7 +110,7 @@
           {"label": "J", "width": 1.0, "code": 36 },
           {"label": "K", "width": 1.0, "code": 37 },
           {"label": "L", "width": 1.0, "code": 38 },
-          {"label": "\u21B5", "width": 2.5, "code": 28}
+          {"label": "\u23ce", "width": 2.5, "code": 28}
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
@@ -130,7 +130,7 @@
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "Spec", "width": 1.0},
           {"label": "Alt", "width": 1.0, "code": 100 },
-          {"label": "Space", "width": 3.0, "code": 57 },
+          {"label": "\u23b5", "width": 3.0, "code": 57 },
           {"label": "Alt", "width": 1.0, "code": 100 },
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "\u2190", "width": 1.0, "code": 105 },
@@ -152,7 +152,7 @@
           {"label": "*", "width": 1.0, "code": 9 },
           {"label": "(", "width": 1.0, "code": 10 },
           {"label": ")", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 111 }
+          {"label": "\u2326", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -166,7 +166,7 @@
           {"label": "I", "width": 1.0, "code": 23 },
           {"label": "O", "width": 1.0, "code": 24 },
           {"label": "P", "width": 1.0, "code": 25 },
-          {"label": "\u21E4", "width": 1.5, "code": 14}
+          {"label": "\u232b", "width": 1.5, "code": 14}
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
@@ -179,7 +179,7 @@
           {"label": "J", "width": 1.0, "code": 36 },
           {"label": "K", "width": 1.0, "code": 37 },
           {"label": "Ł", "width": 1.0, "code": 38 },
-          {"label": "\u21B5", "width": 2.5, "code": 28}
+          {"label": "\u23ce", "width": 2.5, "code": 28}
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
@@ -199,7 +199,7 @@
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "Spec", "width": 1.0},
           {"label": "Alt", "width": 1.0, "code": 100 },
-          {"label": "Space", "width": 3.0, "code": 57 },
+          {"label": "\u23b5", "width": 3.0, "code": 57 },
           {"label": "Alt", "width": 1.0, "code": 100 },
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "\u2190", "width": 1.0, "code": 105 },
@@ -221,7 +221,7 @@
           {"label": "8", "width": 1.0, "code": 9 },
           {"label": "9", "width": 1.0, "code": 10 },
           {"label": "0", "width": 1.0, "code": 11 },
-          {"label": "Del", "width": 1.5, "code": 111 }
+          {"label": "\u2326", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -235,7 +235,7 @@
           {"label": "i", "width": 1.0, "code": 23 },
           {"label": "ó", "width": 1.0, "code": 24 },
           {"label": "p", "width": 1.0, "code": 25 },
-          {"label": "\u21E4", "width": 1.5, "code": 14}
+          {"label": "\u232b", "width": 1.5, "code": 14}
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
@@ -248,7 +248,7 @@
           {"label": "j", "width": 1.0, "code": 36 },
           {"label": "k", "width": 1.0, "code": 37 },
           {"label": "ł", "width": 1.0, "code": 38 },
-          {"label": "\u21B5", "width": 2.5, "code": 28}
+          {"label": "\u23ce", "width": 2.5, "code": 28}
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
@@ -268,7 +268,7 @@
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "Spec", "width": 1.0},
           {"label": "Alt", "width": 1.0, "code": 100 },
-          {"label": "Space", "width": 3.0, "code": 57 },
+          {"label": "\u23b5", "width": 3.0, "code": 57 },
           {"label": "Alt", "width": 1.0, "code": 100 },
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "\u2190", "width": 1.0, "code": 105 },
@@ -290,7 +290,7 @@
           {"label": "F8", "width": 1.0, "code": 66 },
           {"label": "F9", "width": 1.0, "code": 67 },
           {"label": "F10", "width": 1.0, "code": 68 },
-          {"label": "Del", "width": 1.5, "code": 111 }
+          {"label": "\u2326", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -304,20 +304,20 @@
           {"label": "/", "width": 1.0, "code": 53 },
           {"label": "F11", "width": 1.0, "code": 87 },
           {"label": "F12", "width": 1.0, "code": 88 },
-          {"label": "\u21E4", "width": 1.5, "code": 14}
+          {"label": "\u232b", "width": 1.5, "code": 14}
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
           {"label": "xx", "width": 1.0, "code": 113 },
           {"label": "++", "width": 1.0, "code": 114 },
           {"label": "--", "width": 1.0, "code": 115 },
-          {"label": "f", "width": 1.0, "code": 33 },
-          {"label": "g", "width": 1.0, "code": 34 },
+          {"label": "=", "width": 1.0, "code": 13 },
+          {"label": "-", "width": 1.0, "code": 12 },
           {"label": "h", "width": 1.0, "code": 35 },
           {"label": "Ins", "width": 1.0, "code": 110 },
           {"label": "Home", "width": 1.0, "code": 102 },
           {"label": "End", "width": 1.0, "code": 107 },
-          {"label": "\u21B5", "width": 2.5, "code": 28}
+          {"label": "\u23ce", "width": 2.5, "code": 28}
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
@@ -326,9 +326,9 @@
           {"label": "ć", "width": 1.0, "code": 46 },
           {"label": "v", "width": 1.0, "code": 47 },
           {"label": "b", "width": 1.0, "code": 48 },
-          {"label": "ń", "width": 1.0, "code": 49 },
-          {"label": "pUp", "width": 1.0, "code": 104 },
-          {"label": "pDown", "width": 1.0, "code": 109 },
+          {"label": "ń", "width": 1.0, "code": 48 },
+          {"label": "PgUp", "width": 1.0, "code": 104 },
+          {"label": "PgDn", "width": 1.0, "code": 109 },
           {"label": "\u2191", "width": 1.0, "code": 103 },
           {"label": "\u21EB", "width": 2.0, "code": 54}
         ],
@@ -337,7 +337,7 @@
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "Spec", "width": 1.0},
           {"label": "Alt", "width": 1.0, "code": 100 },
-          {"label": "Space", "width": 3.0, "code": 57 },
+          {"label": "\u23b5", "width": 3.0, "code": 57 },
           {"label": "Alt", "width": 1.0, "code": 100 },
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "\u2190", "width": 1.0, "code": 105 },
@@ -359,7 +359,7 @@
           {"label": "F8", "width": 1.0, "code": 66 },
           {"label": "F9", "width": 1.0, "code": 67 },
           {"label": "F10", "width": 1.0, "code": 68 },
-          {"label": "Del", "width": 1.5, "code": 111 }
+          {"label": "\u2326", "width": 1.5, "code": 111 }
         ],
         [
           {"label": "\u21E5", "width": 1.5, "code": 15},
@@ -373,31 +373,31 @@
           {"label": "?", "width": 1.0, "code": 53 },
           {"label": "F11", "width": 1.0, "code": 87 },
           {"label": "F12", "width": 1.0, "code": 88 },
-          {"label": "\u21E4", "width": 1.5, "code": 14}
+          {"label": "\u232b", "width": 1.5, "code": 14}
         ],
         [
           {"label": "CapsL", "width": 1.5, "code": 58 },
           {"label": "xx", "width": 1.0, "code": 113 },
           {"label": "++", "width": 1.0, "code": 114 },
-          {"label": "--", "width": 1.0, "code": 115 },
-          {"label": "f", "width": 1.0, "code": 33 },
-          {"label": "g", "width": 1.0, "code": 34 },
+          {"label": "\u001f5009", "width": 1.0, "code": 115 },
+          {"label": "+", "width": 1.0, "code": 13 },
+          {"label": "_", "width": 1.0, "code": 12 },
           {"label": "h", "width": 1.0, "code": 35 },
           {"label": "Ins", "width": 1.0, "code": 110 },
           {"label": "Home", "width": 1.0, "code": 102 },
           {"label": "End", "width": 1.0, "code": 107 },
-          {"label": "\u21B5", "width": 2.5, "code": 28}
+          {"label": "\u23ce", "width": 2.5, "code": 28}
         ],
         [
           {"label": "\u21EB", "width": 2.0, "code": 54},
-          {"label": "XPOWER", "width": 1.0, "code": 116 },
+          {"label": "\u26a0", "width": 1.0, "code": 116 },
           {"label": "ź", "width": 1.0, "code": 45 },
           {"label": "ć", "width": 1.0, "code": 46 },
           {"label": "v", "width": 1.0, "code": 47 },
           {"label": "b", "width": 1.0, "code": 48 },
-          {"label": "ń", "width": 1.0, "code": 49 },
-          {"label": "pUp", "width": 1.0, "code": 104 },
-          {"label": "pDown", "width": 1.0, "code": 109 },
+          {"label": "ń", "width": 1.0, "code": 48 },
+          {"label": "PgUp", "width": 1.0, "code": 104 },
+          {"label": "PgDn", "width": 1.0, "code": 109 },
           {"label": "\u2191", "width": 1.0, "code": 103 },
           {"label": "\u21EB", "width": 2.0, "code": 54}
         ],
@@ -406,7 +406,7 @@
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "Spec", "width": 1.0},
           {"label": "Alt", "width": 1.0, "code": 100 },
-          {"label": "Space", "width": 3.0, "code": 57 },
+          {"label": "\u23b5", "width": 3.0, "code": 57 },
           {"label": "Alt", "width": 1.0, "code": 100 },
           {"label": "Ctrl", "width": 1.0, "code": 97 },
           {"label": "\u2190", "width": 1.0, "code": 105 },
