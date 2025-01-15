@@ -17,3 +17,10 @@ file:///home/siergiej/Obrazy/KeyOut/20250104_153018.jpg
 
 ![20250104_153824](https://github.com/user-attachments/assets/8007182c-4f3c-48f0-a0e9-d01e6d7bc17e)
 ![20250104_153018](https://github.com/user-attachments/assets/076ce4c0-a5f3-485d-b5c2-6904f237f340)
+
+$ sudo cp virtual-keyboard.service /etc/systemd/system/virtual-keyboard.service 
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable virtual-keyboard.service
+Created symlink '/etc/systemd/system/multi-user.target.wants/virtual-keyboard.service' → '/etc/systemd/system/virtual-keyboard.service'.
+$ sudo systemctl start virtual-keyboard.service
+
