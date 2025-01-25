@@ -30,6 +30,7 @@ class Action:
         self.x = event.x
         self.y = event.y
         self.action = event.event
+        self.id_ = event.id_
 
     def __repr__(self):
         return f"<Action x:{self.x} y:{self.y}, T:{self.action}>"
@@ -156,6 +157,7 @@ class VirtualKeyboard:
         self.alt = 0
         self.spec = 0
         self.last = []
+        self.current = {}
         self.fn = 0
         all_keys = [code for value, code in ecodes.ecodes.items() if value.startswith("KEY_")]
         all_keys = list(set(all_keys))
@@ -170,7 +172,7 @@ class VirtualKeyboard:
         )
 
     def input(self, data):
-        key = self.map_touch_to_key(data.x, data.y)
+        key = self.map_touch_to_key(data.x, data.y, data.id_)
 
         if key is None:
             return 0,0
@@ -192,8 +194,12 @@ class VirtualKeyboard:
             self.keyboard.syn()
         return 0,0
 
-    def map_touch_to_key(self, x, y):
+    def map_touch_to_key(self, x, y, index=0):
         """Mapuje współrzędne dotyku na klawisz."""
+        if index in self.current:
+            x, y = self.current[index]
+        else:
+            self.current[index] = (x, y)
         id_ = self.parent.map[y,x]
         if id_ == 0:
             return None
